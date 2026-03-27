@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
 // KNOWLEDGE BASE — product FAQs, material info, pricing
-const KnowledgeBaseSchema = new mongoose.Schema({
+const KnowledgeBaseSchema = new Schema({
   title: { type: String, required: true },
   category: { type: String, enum: ['product', 'faq', 'installation', 'pricing', 'general'], default: 'general' },
   content: { type: String, required: true },
@@ -12,7 +12,7 @@ const KnowledgeBaseSchema = new mongoose.Schema({
 });
 
 // PRODUCTS — wall panels, breeze blocks, brick cladding, murals
-const ProductSchema = new mongoose.Schema({
+const ProductSchema = new Schema({
   name: { type: String, required: true },
   category: { type: String, enum: ['wall-panels', 'breeze-blocks', 'brick-cladding', 'wall-murals'], required: true },
   description: String,
@@ -28,7 +28,7 @@ const ProductSchema = new mongoose.Schema({
 });
 
 // LOCATIONS — showrooms across India
-const LocationSchema = new mongoose.Schema({
+const LocationSchema = new Schema({
   city: { type: String, required: true },
   state: String,
   showroomName: String,
@@ -39,7 +39,7 @@ const LocationSchema = new mongoose.Schema({
 });
 
 // SYSTEM PROMPT — base AI personality and behavior
-const SystemPromptSchema = new mongoose.Schema({
+const SystemPromptSchema = new Schema({
   version: { type: Number, required: true },
   content: { type: String, required: true },
   isActive: { type: Boolean, default: false },
@@ -48,7 +48,7 @@ const SystemPromptSchema = new mongoose.Schema({
 });
 
 // LEARNING PROMPT — self-learning corrections from admin
-const LearningPromptSchema = new mongoose.Schema({
+const LearningPromptSchema = new Schema({
   version: { type: Number, required: true },
   rules: [{ 
     rule: String, 
@@ -61,7 +61,7 @@ const LearningPromptSchema = new mongoose.Schema({
 });
 
 // CONVERSATION — chat sessions
-const ConversationSchema = new mongoose.Schema({
+const ConversationSchema = new Schema({
   sessionId: { type: String, required: true, unique: true },
   channel: { type: String, enum: ['web', 'whatsapp', 'sandbox'], default: 'web' },
   customerPhone: String,
@@ -91,7 +91,7 @@ const ConversationSchema = new mongoose.Schema({
 });
 
 // ADMIN CORRECTION LOG
-const CorrectionLogSchema = new mongoose.Schema({
+const CorrectionLogSchema = new Schema({
   originalResponse: String,
   correction: String,
   ruleAdded: String,
@@ -99,12 +99,10 @@ const CorrectionLogSchema = new mongoose.Schema({
   addedAt: { type: Date, default: Date.now }
 });
 
-module.exports = {
-  KnowledgeBase: mongoose.model('KnowledgeBase', KnowledgeBaseSchema),
-  Product: mongoose.model('Product', ProductSchema),
-  Location: mongoose.model('Location', LocationSchema),
-  SystemPrompt: mongoose.model('SystemPrompt', SystemPromptSchema),
-  LearningPrompt: mongoose.model('LearningPrompt', LearningPromptSchema),
-  Conversation: mongoose.model('Conversation', ConversationSchema),
-  CorrectionLog: mongoose.model('CorrectionLog', CorrectionLogSchema)
-};
+export const KnowledgeBase = model('KnowledgeBase', KnowledgeBaseSchema);
+export const Product = model('Product', ProductSchema);
+export const Location = model('Location', LocationSchema);
+export const SystemPrompt = model('SystemPrompt', SystemPromptSchema);
+export const LearningPrompt = model('LearningPrompt', LearningPromptSchema);
+export const Conversation = model('Conversation', ConversationSchema);
+export const CorrectionLog = model('CorrectionLog', CorrectionLogSchema);

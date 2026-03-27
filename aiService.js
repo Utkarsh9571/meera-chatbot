@@ -1,5 +1,5 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { SystemPrompt, LearningPrompt, KnowledgeBase, Product, Location } = require('./models');
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { SystemPrompt, LearningPrompt, KnowledgeBase, Product, Location } from './models.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -134,4 +134,4 @@ Respond in JSON only: { "rule": "specific rule text" }`;
   }
 }
 
-module.exports = { chat, applyCorrection };
+export { chat, applyCorrection };
