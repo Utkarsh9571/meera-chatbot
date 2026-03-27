@@ -6,10 +6,12 @@ import cors from 'cors';
 import { randomUUID as uuidv4 } from 'crypto';
 import { Conversation, LearningPrompt, SystemPrompt, KnowledgeBase, Product, Location, CorrectionLog } from './models.js';
 import { chat, applyCorrection } from './aiService.js';
+import path from 'path';
 
 const app = express();
 app.use(cors({ origin: '*' }));
 app.use(_json());
+app.use(express.static(path.join(process.cwd(), 'frontend')));
 
 // Connect MongoDB
 connect(process.env.MONGODB_URI)
@@ -403,6 +405,15 @@ app.post('/api/webhook/gupshup', async (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Serve frontend routes explicitly
+app.get('/', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'frontend', 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'frontend', 'admin.html'));
 });
 
 const PORT = process.env.PORT || 5000;
