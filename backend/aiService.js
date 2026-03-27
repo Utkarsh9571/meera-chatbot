@@ -1,10 +1,33 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+let genAI;
+function getGenAI() {
+  if (!genAI) {
+    if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not defined in environment variables");
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+  return genAI;
+}
+
+async function generateText(prompt) {
+  const model = getGenAI().getGenerativeModel({
+    model: "gemini-2.5-flash-lite"
+  });
+
+  const result = await model.generateContent({
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: prompt }]
+      }
+    ]
+  });
+
+  return result.response.text();
+}
 
 async function chat(messages, leadData, customerCity) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
     const lastUserMsg = messages[messages.length - 1].content;
     const msgLower = lastUserMsg.toLowerCase();
 
@@ -115,8 +138,8 @@ Rules:
 - Return ONLY text. No quotes, no markdown, no JSON.`;
 
     console.log(`[CHAT LOGIC] Step: ${baseMessage}`);
-    const result = await model.generateContent(prompt);
-    let generatedText = result.response.text().trim();
+    let generatedText = await generateText(prompt);
+    generatedText = generatedText.trim();
     generatedText = generatedText.replace(/^["']|["']$/g, '').trim();
 
     // 4. Calculate Lead Score
@@ -159,8 +182,6 @@ Rules:
 
 async function applyCorrection(originalResponse, correction) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
     const prompt = `You are helping update a chatbot's learning rules.
 
 Original bot response: "${originalResponse}"
@@ -172,8 +193,7 @@ The rule should be actionable and specific.
 CRITICAL: Your entire response MUST be valid JSON. Do NOT include markdown, explanation, or text outside JSON. Return ONLY JSON object.
 Respond in JSON only: { "rule": "specific rule text" }`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generateText(prompt);
     let cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
 
     try {
@@ -193,4 +213,4 @@ Respond in JSON only: { "rule": "specific rule text" }`;
   }
 }
 
-export { chat, applyCorrection };
+export { chat, applyCorrection, generateText };

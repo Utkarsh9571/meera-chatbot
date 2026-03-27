@@ -1,11 +1,12 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { generateText } from "./aiService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 import express, { json as _json } from 'express';
 import { connect } from 'mongoose';
@@ -19,7 +20,7 @@ app.use(cors({ origin: '*' }));
 app.use(_json());
 
 // Connect MongoDB
-connect(process.env.MONGODB_URI || process.env.MONGODB_URI)
+connect(process.env.MONGO_URI || process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('🔥 FULL ERROR:', err));
 
