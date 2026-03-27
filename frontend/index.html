@@ -517,6 +517,18 @@
       document.getElementById('sendBtn').disabled = false;
       document.getElementById('msgInput').focus();
     }
+
+    // ✅ PRODUCTION FIX: Event Delegation for Quick Replies
+    document.addEventListener("click", function (e) {
+      if (e.target.classList.contains("quick-reply")) {
+        const text = e.target.getAttribute('data-reply') || e.target.innerText.replace(/[^\w\s-]/g, '').trim();
+        sendMessage(text);
+      }
+    });
+
+    function sendQuickReply(text) {
+      sendMessage(text);
+    }
   </script>
 </body>
 

@@ -29,149 +29,172 @@ async function generateText(prompt) {
 async function chat(messages, leadData, customerCity) {
   try {
     const lastUserMsg = messages[messages.length - 1].content;
-    const msgLower = lastUserMsg.toLowerCase();
-
-    // 1. UPDATE leadData FROM USER INPUT (Manual Extraction)
+    const msgClean = lastUserMsg.trim().toLowerCase().replace(/[^\w\s₹,+.@]/gi, '');
+    
     let updatedLeadData = { ...leadData };
+    let inputMatched = false;
 
+    // 1. IMPROVED EXTRACTION LOGIC
+    
+    // NAME (If not set and likely a name)
     if (!updatedLeadData.name) {
-      if (!msgLower.match(/^(hi|hello|hey|namaste|start)$/i) && lastUserMsg.split(' ').length <= 3) {
-        let nameMatch = lastUserMsg.replace(/^(my name is|i am|this is)\s+/i, '');
-        updatedLeadData.name = nameMatch.trim();
+      const greeings = /^(hi|hello|hey|namaste|start|ok|hmm|yes|no)$/i;
+      if (!msgClean.match(greeings) && lastUserMsg.split(' ').length <= 4) {
+        updatedLeadData.name = lastUserMsg.replace(/^(my name is|i am|this is|myself)\s+/i, '').trim();
+        inputMatched = true;
       }
     }
 
+    // PRODUCT
     if (!updatedLeadData.productInterest) {
-      if (msgLower.includes('panel')) updatedLeadData.productInterest = 'wall-panels';
-      else if (msgLower.includes('breeze') || msgLower.includes('block')) updatedLeadData.productInterest = 'breeze-blocks';
-      else if (msgLower.includes('brick') || msgLower.includes('clad')) updatedLeadData.productInterest = 'brick-cladding';
-      else if (msgLower.includes('mural') || msgLower.includes('art')) updatedLeadData.productInterest = 'wall-murals';
+      if (msgClean.includes('panel')) { updatedLeadData.productInterest = 'wall-panels'; inputMatched = true; }
+      else if (msgClean.includes('breeze') || msgClean.includes('block')) { updatedLeadData.productInterest = 'breeze-blocks'; inputMatched = true; }
+      else if (msgClean.includes('brick') || msgClean.includes('clad')) { updatedLeadData.productInterest = 'brick-cladding'; inputMatched = true; }
+      else if (msgClean.includes('mural') || msgClean.includes('art')) { updatedLeadData.productInterest = 'wall-murals'; inputMatched = true; }
     }
 
+    // CITY (Expanded + Fuzzy)
     if (!updatedLeadData.city) {
-      const cities = ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai', 'pune', 'ahmedabad', 'kolkata', 'jaipur', 'udaipur', 'surat', 'lucknow'];
+      const cities = ['mumbai', 'delhi', 'bangalore', 'bengaluru', 'hyderabad', 'chennai', 'pune', 'ahmedabad', 'kolkata', 'jaipur', 'udaipur', 'surat', 'lucknow', 'alwar', 'gurgaon', 'noida', 'chandigarh'];
       for (let c of cities) {
-        if (msgLower.includes(c)) updatedLeadData.city = c.charAt(0).toUpperCase() + c.slice(1);
+        if (msgClean.includes(c)) {
+          updatedLeadData.city = c.charAt(0).toUpperCase() + c.slice(1);
+          inputMatched = true;
+          break;
+        }
       }
     }
 
+    // BUDGET (Handles 400+, 200/sqft, 100000, no budget)
     if (!updatedLeadData.budget) {
-      if (msgLower.match(/\d+/)) {
-        if (msgLower.includes('budget') || msgLower.includes('₹') || msgLower.includes('rs') || msgLower.includes('rupees')) {
-          updatedLeadData.budget = msgLower.match(/\d+(?:,\d+)*(?:k|lakhs?)?/i)?.[0] || msgLower.match(/\d+/)[0];
+      if (msgClean.includes('no budget') || msgClean.includes('flexible') || msgClean.includes('not fixed')) {
+        updatedLeadData.budget = 'Flexible';
+        inputMatched = true;
+      } else {
+        const budgetMatch = msgClean.match(/(\d+(?:,\d+)*(?:\s*(?:k|lakhs?|sqft|plus|+))?)/i);
+        if (budgetMatch && (msgClean.includes('₹') || msgClean.includes('rs') || msgClean.includes('budget') || msgClean.includes('/') || msgClean.includes('+'))) {
+          updatedLeadData.budget = budgetMatch[0].trim();
+          inputMatched = true;
         }
       }
     }
 
+    // AREA
     if (!updatedLeadData.area) {
-      if (msgLower.match(/\d+/)) {
-        if (msgLower.includes('sq') || msgLower.includes('ft') || msgLower.includes('area')) {
-          updatedLeadData.area = msgLower.match(/\d+/)[0] + ' sqft';
-        }
+      const areaMatch = msgClean.match(/(\d+)\s*(?:sqft|sq|ft|feet|area)?/i);
+      if (areaMatch && (msgClean.includes('sq') || msgClean.includes('ft') || msgClean.includes('area') || msgClean.includes('size'))) {
+        updatedLeadData.area = areaMatch[1] + ' sqft';
+        inputMatched = true;
       }
     }
 
+    // ROOM TYPE (Typo handling)
     if (!updatedLeadData.roomType) {
-      if (msgLower.includes('living')) updatedLeadData.roomType = 'living room';
-      else if (msgLower.includes('bed')) updatedLeadData.roomType = 'bedroom';
-      else if (msgLower.includes('office') || msgLower.includes('commercial')) updatedLeadData.roomType = 'office';
-      else if (msgLower.includes('outdoor') || msgLower.includes('exterior') || msgLower.includes('garden')) updatedLeadData.roomType = 'outdoor';
+      if (msgClean.includes('living') || msgClean.includes('vroom') || msgClean.includes('hall')) { updatedLeadData.roomType = 'living room'; inputMatched = true; }
+      else if (msgClean.includes('bed') || msgClean.includes('room')) { updatedLeadData.roomType = 'bedroom'; inputMatched = true; }
+      else if (msgClean.includes('office') || msgClean.includes('cabin') || msgClean.includes('work')) { updatedLeadData.roomType = 'office'; inputMatched = true; }
+      else if (msgClean.includes('out') || msgClean.includes('ext') || msgClean.includes('gar') || msgClean.includes('terrace')) { updatedLeadData.roomType = 'outdoor'; inputMatched = true; }
     }
 
+    // STYLE
     if (!updatedLeadData.stylePreference) {
-      if (msgLower.includes('modern')) updatedLeadData.stylePreference = 'modern';
-      else if (msgLower.includes('minimal')) updatedLeadData.stylePreference = 'minimalist';
-      else if (msgLower.includes('traditional')) updatedLeadData.stylePreference = 'traditional';
-      else if (msgLower.includes('rustic')) updatedLeadData.stylePreference = 'rustic';
+      if (msgClean.includes('modern')) { updatedLeadData.stylePreference = 'modern'; inputMatched = true; }
+      else if (msgClean.includes('minim')) { updatedLeadData.stylePreference = 'minimalist'; inputMatched = true; }
+      else if (msgClean.includes('tradit')) { updatedLeadData.stylePreference = 'traditional'; inputMatched = true; }
+      else if (msgClean.includes('rustic') || msgClean.includes('raw')) { updatedLeadData.stylePreference = 'rustic'; inputMatched = true; }
     }
 
+    // TIMELINE
     if (!updatedLeadData.timeline) {
-      if (msgLower.match(/\b(immediate|now|soon|urgent)\b/)) updatedLeadData.timeline = 'Immediate';
-      else if (msgLower.match(/\b(month|week|days)\b/)) updatedLeadData.timeline = '1-3 months';
-      else if (msgLower.match(/\b(explore|looking|just checking)\b/)) updatedLeadData.timeline = 'Exploring';
+      if (msgClean.match(/\b(immediate|now|soon|urgent|asap)\b/)) { updatedLeadData.timeline = 'Immediate'; inputMatched = true; }
+      else if (msgClean.match(/\b(month|week|days|soon)\b/)) { updatedLeadData.timeline = '1-3 months'; inputMatched = true; }
+      else if (msgClean.match(/\b(explore|look|check|just)\b/)) { updatedLeadData.timeline = 'Exploring'; inputMatched = true; }
     }
 
-    // 2. CONTROL FLOW USING leadData (Determine next question manually)
+    // 2. DETERMINISTIC FLOW CONTROL
     let baseMessage = "";
     let handoverTriggered = false;
+    let nextStepMessage = "";
 
     if (!updatedLeadData.name) {
-      baseMessage = "Warmly say hello. Introduce yourself as Meera from Hey Concrete and ask for their name.";
+      nextStepMessage = "Warmly say hello! Introduce yourself as Meera from Hey Concrete and ask for their name.";
     } else if (!updatedLeadData.productInterest) {
-      baseMessage = `Thank ${updatedLeadData.name}. Ask if they are looking for wall panels, breeze blocks, brick cladding, or wall murals.`;
+      nextStepMessage = `Thank you, ${updatedLeadData.name}! Ask what they are looking for: Wall Panels, Breeze Blocks, Brick Cladding, or Wall Murals.`;
     } else if (!updatedLeadData.city) {
-      baseMessage = "Ask which city they are located in so you can suggest the nearest showroom.";
+      nextStepMessage = "Ask which city they are located in so we can suggest the nearest showroom or check delivery.";
     } else if (!updatedLeadData.budget) {
-      baseMessage = "Ask what their approximate budget is. Mention our product ranges (Under ₹200/sqft, ₹200-400/sqft, or ₹400+).";
+      nextStepMessage = "Ask for their approximate budget. Mention we have premium options starting from ₹200/sqft and going up based on design.";
     } else if (!updatedLeadData.area) {
-      baseMessage = "Ask what the total wall area is that they want to cover (in square feet).";
+      nextStepMessage = "Ask for the total estimated wall area they want to cover (in square feet).";
     } else if (!updatedLeadData.roomType) {
-      baseMessage = "Ask what type of room or space this is for (e.g., living room, bedroom, office, outdoor).";
+      nextStepMessage = "Ask which specific room or area this is for (e.g., Living Room, Bedroom, Exterior, etc.).";
     } else if (!updatedLeadData.stylePreference) {
-      baseMessage = "Ask what design style they prefer (like modern, minimalist, traditional, or rustic).";
+      nextStepMessage = "Ask about their preferred design style (Modern, Minimalist, Rustic, or Traditional).";
     } else if (!updatedLeadData.timeline) {
-      baseMessage = "Ask when they are planning to start the project (immediate, in a few months, or just exploring).";
+      nextStepMessage = "Final question! Ask when they plan to start this project (Immediate, in a few months, or just exploring).";
     } else {
       updatedLeadData.leadStatus = "qualified";
       handoverTriggered = true;
-      baseMessage = `Thank them for providing all the details! Tell them a human sales expert (Kabir) will reach out with specific product recommendations and a quote shortly.`;
+      nextStepMessage = "Great! You have all the details. Tell the user that Kabir from our sales team will reach out to them on WhatsApp within 15 minutes with personalized catalog and pricing.";
     }
 
-    // Check manual handover triggers
-    if (msgLower.includes('call') || msgLower.includes('talk to human') || msgLower.includes('person') || msgLower.includes('kabir')) {
+    // Handling "ok/hmm" junk input - repeat question gently
+    if (!inputMatched && updatedLeadData.name && !handoverTriggered) {
+      baseMessage = `The user said "${lastUserMsg}". Acknowledge politely and gently repeat the request: ${nextStepMessage}`;
+    } else {
+      baseMessage = nextStepMessage;
+    }
+
+    // Manual Handover Triggers
+    if (msgClean.match(/\b(call|talk|human|person|kabir|expert|number)\b/)) {
       handoverTriggered = true;
-      baseMessage = "Acknowledge they want to speak to a person. Let them know Kabir from our sales team will contact them shortly.";
+      baseMessage = "Acknowledge their request to speak with a person. Let them know Kabir will call or message them shortly.";
     }
 
-    // 3. USE GEMINI ONLY FOR RESPONSE STYLE, NOT LOGIC
-    const prompt = `You are Meera, a sales consultant from Hey Concrete.
+    // 3. GENERATE HUMAN PHRASING
+    const prompt = `You are Meera, a friendly and professional sales consultant from Hey Concrete.
 
-Rewrite this message in a friendly, human WhatsApp style:
-"${baseMessage}"
+Context for response: "${baseMessage}"
+User Name: ${updatedLeadData.name || "User"}
 
-Rules:
-- 2-3 lines max
-- 1 emoji
-- Hinglish tone (conversational, natural Indian English mixed with casual Hindi words)
-- Sound natural and empathetic
-- DO NOT add extra questions not in the prompt
-- Return ONLY text. No quotes, no markdown, no JSON.`;
+RULES:
+- Speak DIRECTLY to the user (use "Aap", "You", "Aapka").
+- NEVER use third-person (e.g., dont say "They are looking for").
+- Tone: Friendly, natural Hinglish (conversational Indian English).
+- Max 2 short lines.
+- Use 1 relevant emoji.
+- Sound like a real person on WhatsApp, not a bot.
+- DO NOT add extra questions not implied by the context.
+- Return ONLY the message text.`;
 
-    console.log(`[CHAT LOGIC] Step: ${baseMessage}`);
-    let generatedText = await generateText(prompt);
-    generatedText = generatedText.trim();
-    generatedText = generatedText.replace(/^["']|["']$/g, '').trim();
+    const generatedText = await generateText(prompt);
+    let finalMsg = generatedText.trim().replace(/^["']|["']$/g, '');
 
-    // 4. Calculate Lead Score
-    let calculatedScore = 0;
-    if (updatedLeadData.name) calculatedScore += 5;
-    if (updatedLeadData.productInterest) calculatedScore += 10;
-    if (updatedLeadData.city) calculatedScore += 10;
-    if (updatedLeadData.budget) calculatedScore += 25;
-    if (updatedLeadData.area) calculatedScore += 20;
-    if (updatedLeadData.stylePreference) calculatedScore += 15;
-    if (updatedLeadData.timeline === 'Immediate') calculatedScore += 15;
-    if (updatedLeadData.timeline === '1-3 months') calculatedScore += 10;
+    // 4. SCORE CALCULATION
+    let score = 0;
+    if (updatedLeadData.name) score += 5;
+    if (updatedLeadData.productInterest) score += 10;
+    if (updatedLeadData.city) score += 10;
+    if (updatedLeadData.budget) score += 25;
+    if (updatedLeadData.area) score += 20;
+    if (updatedLeadData.roomType) score += 10;
+    if (updatedLeadData.stylePreference) score += 10;
+    if (updatedLeadData.timeline) score += 10;
 
-    if (calculatedScore >= 70) handoverTriggered = true;
+    if (score >= 70) handoverTriggered = true;
 
-    // 5. RETURN STRUCTURED RESPONSE
     return {
-      message: generatedText,
+      message: finalMsg,
       leadData: updatedLeadData,
-      leadScore: calculatedScore,
+      leadScore: Math.min(score, 100),
       handover: handoverTriggered,
-      handoverReason: handoverTriggered ? "Lead qualified or requested handover" : ""
+      handoverReason: handoverTriggered ? "Lead qualified or requested assistance" : ""
     };
 
   } catch (err) {
     console.error('AI Error:', err.message);
-
-    // Safely determine next manual step even if API fails
-    const defaultFallback = "Network mein thoda issue hai 😊 Aapka detail mila, thoda aur bataiye na? (Try sending your response again)";
-
     return {
-      message: defaultFallback,
+      message: "Thoda network issue lag raha hai 😊 Aapka load ho raha hai, tab tak batayiye aap kis city se hain?",
       leadData: leadData || {},
       leadScore: 0,
       handover: false,
@@ -182,32 +205,14 @@ Rules:
 
 async function applyCorrection(originalResponse, correction) {
   try {
-    const prompt = `You are helping update a chatbot's learning rules.
-
-Original bot response: "${originalResponse}"
-Admin correction: "${correction}"
-
-Generate a clear, specific rule to add to the bot's behavior guidelines.
-The rule should be actionable and specific.
-
-CRITICAL: Your entire response MUST be valid JSON. Do NOT include markdown, explanation, or text outside JSON. Return ONLY JSON object.
-Respond in JSON only: { "rule": "specific rule text" }`;
-
+    const prompt = `Update behavior rule:
+Original: ${originalResponse}
+Correction: ${correction}
+Return JSON: { "rule": "actionable rule" }`;
     const text = await generateText(prompt);
-    let cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-
-    try {
-      const parsed = JSON.parse(cleaned);
-      return parsed.rule || correction;
-    } catch {
-      const firstBrace = cleaned.indexOf('{');
-      const lastBrace = cleaned.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        const parsed = JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
-        return parsed.rule || correction;
-      }
-      return correction;
-    }
+    const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    return parsed.rule || correction;
   } catch (err) {
     return correction;
   }
