@@ -1,10 +1,4 @@
 import dotenv from 'dotenv';
-import express, { json as _json } from 'express';
-import { connect } from 'mongoose';
-import cors from 'cors';
-import { randomUUID as uuidv4 } from 'crypto';
-import { Conversation, LearningPrompt, SystemPrompt, KnowledgeBase, Product, Location, CorrectionLog } from './models.js';
-import { chat, applyCorrection } from './aiService.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -13,20 +7,38 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
+import express, { json as _json } from 'express';
+import { connect } from 'mongoose';
+import cors from 'cors';
+import { randomUUID as uuidv4 } from 'crypto';
+import { Conversation, LearningPrompt, SystemPrompt, KnowledgeBase, Product, Location, CorrectionLog } from './models.js';
+import { chat, applyCorrection } from './aiService.js';
+
 const app = express();
 app.use(cors({ origin: '*' }));
 app.use(_json());
-app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Connect MongoDB
-connect(process.env.MONGODB_URI)
+connect(process.env.MONGODB_URI || process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('MongoDB error:', err));
+  .catch(err => console.error('🔥 FULL ERROR:', err));
 
 // Helper to generate session ID
 function generateSessionId() {
   return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
+
+// ============================================================
+// HEALTH & TEST ROUTES
+// ============================================================
+
+app.get('/', (req, res) => {
+  res.send('Backend running');
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // ============================================================
 // CHAT ROUTES
@@ -36,6 +48,10 @@ function generateSessionId() {
 app.post('/api/chat', async (req, res) => {
   try {
     const { sessionId, message, channel = 'web' } = req.body;
+    
+    console.log(`\n[CHAT INCOMING] Session: ${sessionId || 'NEW'}, Channel: ${channel}`);
+    console.log(`[CHAT MESSAGE] ${message}`);
+
     if (!message) return res.status(400).json({ error: 'Message required' });
 
     // Get or create conversation
@@ -43,10 +59,12 @@ app.post('/api/chat', async (req, res) => {
     const sid = sessionId || generateSessionId();
 
     if (sessionId) {
+      console.log(`[CHAT FETCH] Fetching conversation: ${sessionId}`);
       conversation = await Conversation.findOne({ sessionId });
     }
 
     if (!conversation) {
+      console.log(`[CHAT CREATE] Creating new conversation: ${sid}`);
       conversation = new Conversation({
         sessionId: sid,
         channel,
@@ -61,11 +79,18 @@ app.post('/api/chat', async (req, res) => {
     conversation.lastMessageAt = new Date();
 
     // Get AI response
+    console.log(`[CHAT AI] Starting AI call...`);
     const aiResponse = await chat(
       conversation.messages,
       conversation.leadData,
       conversation.leadData?.city
     );
+
+    console.log(`[CHAT AI RESPONSE]`, JSON.stringify(aiResponse));
+
+    if (!aiResponse || !aiResponse.message) {
+      throw new Error("Invalid AI response");
+    }
 
     // Update lead data
     if (aiResponse.leadData) {
@@ -87,7 +112,9 @@ app.post('/api/chat', async (req, res) => {
     // Add assistant message
     conversation.messages.push({ role: 'assistant', content: aiResponse.message });
 
+    console.log(`[CHAT DB] Saving conversation updates...`);
     await conversation.save();
+    console.log(`[CHAT SAVED] Checkpoint complete.`);
 
     res.json({
       sessionId: sid,
@@ -98,8 +125,8 @@ app.post('/api/chat', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Chat error:', err);
-    res.status(500).json({ error: 'Server error', message: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -110,7 +137,8 @@ app.get('/api/chat/:sessionId', async (req, res) => {
     if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
     res.json(conversation);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -124,7 +152,8 @@ app.get('/api/admin/learning-prompt', async (req, res) => {
     const prompt = await LearningPrompt.findOne({ isActive: true });
     res.json(prompt);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -134,7 +163,8 @@ app.get('/api/admin/learning-prompt/versions', async (req, res) => {
     const versions = await LearningPrompt.find({}).sort({ version: -1 });
     res.json(versions);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -184,8 +214,8 @@ app.post('/api/admin/correction', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Correction error:', err);
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -202,7 +232,8 @@ app.post('/api/admin/learning-prompt/rollback/:version', async (req, res) => {
 
     res.json({ success: true, activeVersion: version });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -225,7 +256,8 @@ app.post('/api/admin/system-prompt', async (req, res) => {
 
     res.json({ success: true, version: newPrompt.version });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -235,7 +267,8 @@ app.get('/api/admin/system-prompt', async (req, res) => {
     const prompt = await SystemPrompt.findOne({ isActive: true });
     res.json(prompt);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -248,7 +281,8 @@ app.get('/api/admin/knowledge', async (req, res) => {
     const entries = await KnowledgeBase.find({}).sort({ createdAt: -1 });
     res.json(entries);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -257,7 +291,8 @@ app.post('/api/admin/knowledge', async (req, res) => {
     const entry = await KnowledgeBase.create(req.body);
     res.json(entry);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -266,7 +301,8 @@ app.put('/api/admin/knowledge/:id', async (req, res) => {
     const entry = await KnowledgeBase.findByIdAndUpdate(req.params.id, { ...req.body, updatedAt: new Date() }, { new: true });
     res.json(entry);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -275,7 +311,8 @@ app.delete('/api/admin/knowledge/:id', async (req, res) => {
     await KnowledgeBase.findByIdAndDelete(req.params.id);
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -288,7 +325,8 @@ app.get('/api/admin/locations', async (req, res) => {
     const locations = await Location.find({}).sort({ city: 1 });
     res.json(locations);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -297,7 +335,8 @@ app.post('/api/admin/locations', async (req, res) => {
     const location = await Location.create(req.body);
     res.json(location);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -306,7 +345,8 @@ app.put('/api/admin/locations/:id', async (req, res) => {
     const location = await Location.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(location);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -319,7 +359,8 @@ app.get('/api/admin/products', async (req, res) => {
     const products = await Product.find({}).sort({ category: 1, name: 1 });
     res.json(products);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -328,7 +369,8 @@ app.put('/api/admin/products/:id', async (req, res) => {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(product);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -346,7 +388,8 @@ app.get('/api/admin/conversations', async (req, res) => {
       .select('-messages');
     res.json(conversations);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -356,7 +399,8 @@ app.get('/api/admin/conversations/:sessionId', async (req, res) => {
     if (!conversation) return res.status(404).json({ error: 'Not found' });
     res.json(conversation);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
@@ -385,45 +429,18 @@ app.post('/api/webhook/gupshup', async (req, res) => {
 
     const sessionId = conversation?.sessionId || generateSessionId();
 
-    // Process through chat API
-    const chatReq = { body: { sessionId, message, channel: 'whatsapp' } };
-    const chatRes = {
-      json: async (data) => {
-        // Send response back via Gupshup
-        // TODO: Add Gupshup outbound API call here
-        console.log('WhatsApp response to', phone, ':', data.message);
-      },
-      status: (code) => ({ json: (err) => console.error('Chat error:', err) })
-    };
-
-    // Process message
-    const response = await processChat(sessionId, message, 'whatsapp', phone);
-    console.log('Gupshup webhook processed for:', phone);
+    console.log(`[GUPSHUP] Received message from ${phone}: ${message}`);
 
     res.status(200).json({ success: true });
   } catch (err) {
-    console.error('Gupshup webhook error:', err);
-    res.status(200).json({ success: true }); // Always return 200 to Gupshup
+    console.error("🔥 FULL ERROR:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
-});
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Serve frontend routes explicitly
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
-});
-
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend', 'admin.html'));
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Meera chatbot server running on port ${PORT}`);
+  console.log(`🚀 Meera chatbot API server running on port ${PORT}`);
 });
 
 export default app;
