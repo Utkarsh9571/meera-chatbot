@@ -30,12 +30,12 @@ async function chat(messages, leadData, customerCity) {
   try {
     const lastUserMsg = messages[messages.length - 1].content;
     const msgClean = lastUserMsg.trim().toLowerCase().replace(/[^\w\s₹,+.@]/gi, '');
-    
+
     let updatedLeadData = { ...leadData };
     let inputMatched = false;
 
     // 1. IMPROVED EXTRACTION LOGIC
-    
+
     // NAME (If not set and likely a name)
     if (!updatedLeadData.name) {
       const greeings = /^(hi|hello|hey|namaste|start|ok|hmm|yes|no)$/i;
@@ -71,7 +71,7 @@ async function chat(messages, leadData, customerCity) {
         updatedLeadData.budget = 'Flexible';
         inputMatched = true;
       } else {
-        const budgetMatch = msgClean.match(/(\d+(?:,\d+)*(?:\s*(?:k|lakhs?|sqft|plus|+))?)/i);
+        const budgetMatch = msgClean.match(/(\d+(?:,\d+)*(?:\s*(?:k|lakhs?|sqft|plus|\+))?)/i);
         if (budgetMatch && (msgClean.includes('₹') || msgClean.includes('rs') || msgClean.includes('budget') || msgClean.includes('/') || msgClean.includes('+'))) {
           updatedLeadData.budget = budgetMatch[0].trim();
           inputMatched = true;
