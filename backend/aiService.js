@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function chat(messages, leadData, customerCity) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
     const lastUserMsg = messages[messages.length - 1].content;
     const msgLower = lastUserMsg.toLowerCase();
     
@@ -159,7 +159,7 @@ Rules:
 
 async function applyCorrection(originalResponse, correction) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
 
     const prompt = `You are helping update a chatbot's learning rules.
 
