@@ -4,20 +4,20 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function chat(messages, leadData, customerCity) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
     const lastUserMsg = messages[messages.length - 1].content;
     const msgLower = lastUserMsg.toLowerCase();
-    
+
     // 1. UPDATE leadData FROM USER INPUT (Manual Extraction)
     let updatedLeadData = { ...leadData };
-    
+
     if (!updatedLeadData.name) {
       if (!msgLower.match(/^(hi|hello|hey|namaste|start)$/i) && lastUserMsg.split(' ').length <= 3) {
         let nameMatch = lastUserMsg.replace(/^(my name is|i am|this is)\s+/i, '');
         updatedLeadData.name = nameMatch.trim();
       }
     }
-    
+
     if (!updatedLeadData.productInterest) {
       if (msgLower.includes('panel')) updatedLeadData.productInterest = 'wall-panels';
       else if (msgLower.includes('breeze') || msgLower.includes('block')) updatedLeadData.productInterest = 'breeze-blocks';
@@ -143,10 +143,10 @@ Rules:
 
   } catch (err) {
     console.error('AI Error:', err.message);
-    
+
     // Safely determine next manual step even if API fails
     const defaultFallback = "Network mein thoda issue hai 😊 Aapka detail mila, thoda aur bataiye na? (Try sending your response again)";
-    
+
     return {
       message: defaultFallback,
       leadData: leadData || {},
@@ -159,7 +159,7 @@ Rules:
 
 async function applyCorrection(originalResponse, correction) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 
     const prompt = `You are helping update a chatbot's learning rules.
 
@@ -175,7 +175,7 @@ Respond in JSON only: { "rule": "specific rule text" }`;
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     let cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-    
+
     try {
       const parsed = JSON.parse(cleaned);
       return parsed.rule || correction;
