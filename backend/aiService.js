@@ -67,31 +67,48 @@ async function chat(messages, leadData, customerCity) {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const fullPrompt = await buildFullPrompt(customerCity || leadData?.city);
 
-    // Format conversation history for Gemini
-    const history = messages.slice(0, -1).map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }));
-
-    const chatSession = model.startChat({
-      history: history.length > 0 ? history : undefined,
-      systemInstruction: fullPrompt
-    });
+    let historyText = "";
+    if (messages.length > 1) {
+      historyText = messages.slice(0, -1).map(m => `${m.role}: ${m.content}`).join('\n');
+    } else {
+      historyText = "No previous messages.";
+    }
 
     const lastMessage = messages[messages.length - 1];
-    const contextMessage = `Current lead data collected so far: ${JSON.stringify(leadData)}
 
-Customer message: ${lastMessage.content}
+    const finalPrompt = `${fullPrompt}
 
-Respond in valid JSON only: { "message": "...", "leadData": {...only new/updated fields...}, "leadScore": 0, "handover": false, "handoverReason": "" }
-CRITICAL: Your entire response MUST be valid JSON. Do NOT include markdown, explanation, or text outside JSON. Return ONLY JSON object.`;
+=== CONVERSATION HISTORY ===
+${historyText}
 
-    const result = await chatSession.sendMessage(contextMessage);
+=== CURRENT LEAD DATA ===
+${JSON.stringify(leadData)}
+
+=== CURRENT MESSAGE ===
+${lastMessage.content}
+
+=== INSTRUCTIONS ===
+- Continue the conversation naturally
+- Follow the lead collection steps strictly
+- Ask only ONE question at a time
+- Move step-by-step: name → product → city → budget → area → room → style → timeline
+- Do NOT repeat previous questions
+- Ask the next logical question
+- Respond in 2–3 lines max
+- Use 1–2 emojis
+- Be conversational and human-like
+- Use slight Hinglish for a friendly tone (e.g., "Nice to meet you 😊 Aap wall panels dekh rahe ho ya breeze blocks?")
+- Do NOT restart conversation every time
+
+STRICT RULE:
+Your entire response MUST be valid JSON.
+Do NOT include any text outside JSON.`;
+
+    const result = await model.generateContent(finalPrompt);
     const responseText = result.response.text();
     
     console.log("🧠 RAW GEMINI RESPONSE:", responseText);
 
-    // Safe JSON Parsing attempt 1
     cleaned = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
     let parsed;
     
@@ -100,14 +117,11 @@ CRITICAL: Your entire response MUST be valid JSON. Do NOT include markdown, expl
     } catch (parseError) {
       console.error("❌ JSON PARSE FAILED:", cleaned);
       
-      // Attempt 2: Extract JSON using regex/bounds
       const firstBrace = cleaned.indexOf('{');
       const lastBrace = cleaned.lastIndexOf('}');
-      
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        const regexExtracted = cleaned.substring(firstBrace, lastBrace + 1);
         try {
-          parsed = JSON.parse(regexExtracted);
+          parsed = JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
         } catch (secondParseError) {
           throw new Error("Invalid AI response - secondary parse failed");
         }
@@ -135,7 +149,6 @@ CRITICAL: Your entire response MUST be valid JSON. Do NOT include markdown, expl
   } catch (err) {
     console.error('AI Error:', err.message);
     
-    // Graceful text fallback
     return {
       message: cleaned || "Hey! 😊 How can I help you today?",
       leadData: {},
