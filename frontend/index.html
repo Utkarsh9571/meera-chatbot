@@ -411,8 +411,8 @@
   </div>
 
   <script>
+    let sessionId = localStorage.getItem("sessionId") || null;
     const API_URL = 'https://meera-chatbot-1.onrender.com'; // Replace with your backend URL
-    let sessionId = null;
     let isLoading = false;
 
     function getTime() {
@@ -471,12 +471,10 @@
       const message = text || input.value.trim();
       if (!message || isLoading) return;
 
-      // Clear input and quick replies
       input.value = '';
       input.style.height = 'auto';
       document.getElementById('quickReplies').innerHTML = '';
 
-      // Add user message
       addMessage(message, 'user');
 
       isLoading = true;
@@ -487,11 +485,20 @@
         const res = await fetch(`${API_URL}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, message, channel: 'web' })
+          body: JSON.stringify({
+            sessionId: sessionId,
+            message,
+            channel: 'web'
+          })
         });
 
         const data = await res.json();
-        sessionId = data.sessionId;
+
+        // ✅ FIX: persist session
+        if (data.sessionId) {
+          sessionId = data.sessionId;
+          localStorage.setItem("sessionId", sessionId);
+        }
 
         hideTyping();
         addMessage(data.message, 'bot');
@@ -509,10 +516,6 @@
       isLoading = false;
       document.getElementById('sendBtn').disabled = false;
       document.getElementById('msgInput').focus();
-    }
-
-    function sendQuickReply(text) {
-      sendMessage(text);
     }
   </script>
 </body>

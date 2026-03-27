@@ -78,6 +78,8 @@ app.post('/api/chat', async (req, res) => {
     conversation.messages.push({ role: 'user', content: message });
     conversation.lastMessageAt = new Date();
 
+    console.log("BEFORE leadData:", conversation.leadData);
+
     // Get AI response
     console.log(`[CHAT AI] Starting AI call...`);
     const aiResponse = await chat(
@@ -93,9 +95,9 @@ app.post('/api/chat', async (req, res) => {
     }
 
     // Update lead data
-    if (aiResponse.leadData) {
-      conversation.leadData = { ...conversation.leadData, ...aiResponse.leadData };
-    }
+    console.log("AFTER leadData:", aiResponse.leadData);
+    conversation.leadData = aiResponse.leadData;
+    conversation.markModified('leadData'); // Required to persist Mongoose object changes
 
     // Update lead score
     if (aiResponse.leadScore > conversation.leadScore) {
