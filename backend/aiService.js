@@ -11,7 +11,7 @@ function getGenAI() {
 
 async function generateText(prompt) {
   const model = getGenAI().getGenerativeModel({
-    model: "gemini-3.1-pro-preview"
+    model: "gemini-3-pro-preview"
   });
 
   const result = await model.generateContent({
