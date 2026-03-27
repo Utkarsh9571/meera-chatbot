@@ -1,363 +1,903 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meera Admin — Hey Concrete</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meera Admin — Hey Concrete</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-.sidebar {
-  width: 220px; background: #1a1a2e; height: 100vh; position: fixed;
-  left: 0; top: 0; padding: 20px 0; display: flex; flex-direction: column;
-}
-.sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
-.sidebar-logo h2 { color: white; font-size: 16px; font-weight: 700; }
-.sidebar-logo p { color: #aaa; font-size: 11px; margin-top: 2px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
 
-.nav-item {
-  padding: 10px 20px; color: #aaa; cursor: pointer;
-  display: flex; align-items: center; gap: 10px; font-size: 14px;
-  transition: all 0.2s; border-left: 3px solid transparent;
-}
-.nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-.nav-item.active { background: rgba(37,211,102,0.15); color: #25d366; border-left-color: #25d366; }
-.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+    .sidebar {
+      width: 220px;
+      background: #1a1a2e;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+    }
 
-.main { margin-left: 220px; padding: 24px; min-height: 100vh; }
-.page { display: none; }
-.page.active { display: block; }
+    .sidebar-logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 10px;
+    }
 
-.page-header { margin-bottom: 24px; }
-.page-header h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; }
-.page-header p { color: #666; font-size: 14px; margin-top: 4px; }
+    .sidebar-logo h2 {
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+    }
 
-.card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 16px; }
-.card h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }
+    .sidebar-logo p {
+      color: #aaa;
+      font-size: 11px;
+      margin-top: 2px;
+    }
 
-/* Stats row */
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-.stat-card { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.stat-card .num { font-size: 28px; font-weight: 700; color: #1a1a2e; }
-.stat-card .label { font-size: 12px; color: #888; margin-top: 2px; }
-.stat-card .change { font-size: 12px; color: #25d366; margin-top: 4px; }
+    .nav-item {
+      padding: 10px 20px;
+      color: #aaa;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
 
-/* Tabs */
-.tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #f5f5f5; padding: 4px; border-radius: 8px; width: fit-content; }
-.tab { padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: #666; transition: all 0.2s; }
-.tab.active { background: white; color: #1a1a2e; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+    }
 
-/* Sandbox */
-.sandbox-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.sandbox-chat { background: #e5ddd5; border-radius: 12px; padding: 16px; height: 500px; display: flex; flex-direction: column; }
-.sandbox-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.sandbox-msg { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.4; }
-.sandbox-msg.bot { background: white; align-self: flex-start; border-top-left-radius: 0; }
-.sandbox-msg.user { background: #d9fdd3; align-self: flex-end; border-top-right-radius: 0; }
-.sandbox-input-row { display: flex; gap: 8px; }
-.sandbox-input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; font-size: 13px; outline: none; }
-.sandbox-send { padding: 8px 16px; background: #25d366; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; }
+    .nav-item.active {
+      background: rgba(37, 211, 102, 0.15);
+      color: #25d366;
+      border-left-color: #25d366;
+    }
 
-.correction-panel { display: flex; flex-direction: column; gap: 12px; }
-.correction-panel h4 { font-size: 14px; font-weight: 600; color: #1a1a2e; }
-.selected-msg { background: #fff3cd; border: 1px solid #ffc107; padding: 10px 12px; border-radius: 8px; font-size: 13px; min-height: 60px; color: #666; }
-.correction-input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; resize: vertical; min-height: 80px; outline: none; font-family: inherit; }
-.correction-input:focus { border-color: #25d366; }
-.apply-btn { padding: 10px 20px; background: #25d366; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: background 0.2s; }
-.apply-btn:hover { background: #1da851; }
-.apply-btn:disabled { background: #ccc; cursor: default; }
-.success-msg { background: #d4edda; color: #155724; padding: 8px 12px; border-radius: 6px; font-size: 13px; display: none; }
+    .nav-icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
 
-/* Learning prompt versions */
-.version-list { display: flex; flex-direction: column; gap: 8px; }
-.version-item { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
-.version-item.active-version { border-color: #25d366; background: #f0fff4; }
-.version-meta { font-size: 12px; color: #666; }
-.version-num { font-weight: 700; font-size: 14px; color: #1a1a2e; }
-.rollback-btn { padding: 5px 12px; background: transparent; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 12px; color: #666; transition: all 0.2s; }
-.rollback-btn:hover { border-color: #ff6b35; color: #ff6b35; }
+    .main {
+      margin-left: 220px;
+      padding: 24px;
+      min-height: 100vh;
+    }
 
-/* Knowledge base */
-.kb-grid { display: grid; gap: 12px; }
-.kb-item { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 14px 16px; }
-.kb-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-.kb-title { font-weight: 600; font-size: 14px; color: #1a1a2e; }
-.kb-category { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #e8f5e9; color: #2e7d32; }
-.kb-content { font-size: 13px; color: #666; line-height: 1.5; }
-.kb-actions { display: flex; gap: 8px; margin-top: 10px; }
-.edit-btn { padding: 4px 10px; background: transparent; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; font-size: 12px; color: #666; }
-.edit-btn:hover { border-color: #007bff; color: #007bff; }
+    .page {
+      display: none;
+    }
 
-/* Add form */
-.add-form { background: #f9f9f9; border: 1px dashed #ccc; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: none; }
-.add-form.show { display: block; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-.form-input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; font-family: inherit; }
-.form-input:focus { border-color: #25d366; }
-.form-textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; resize: vertical; min-height: 80px; outline: none; font-family: inherit; }
-.form-textarea:focus { border-color: #25d366; }
-.form-actions { display: flex; gap: 8px; }
-.save-btn { padding: 8px 20px; background: #25d366; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
-.cancel-btn { padding: 8px 16px; background: transparent; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 13px; color: #666; }
+    .page.active {
+      display: block;
+    }
 
-/* Leads table */
-.leads-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.leads-table th { background: #f5f5f5; padding: 10px 14px; text-align: left; font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-.leads-table td { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; }
-.leads-table tr:hover td { background: #fafafa; }
-.score-badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-.score-high { background: #fee2e2; color: #991b1b; }
-.score-mid { background: #fef3c7; color: #92400e; }
-.score-low { background: #f0fdf4; color: #166534; }
-.status-badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; }
-.status-active { background: #dbeafe; color: #1e40af; }
-.status-handed { background: #dcfce7; color: #166534; }
-.status-dormant { background: #f3f4f6; color: #6b7280; }
+    .page-header {
+      margin-bottom: 24px;
+    }
 
-.add-new-btn { padding: 8px 16px; background: #25d366; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
 
-/* System prompt */
-.prompt-textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: 'Courier New', monospace; min-height: 400px; outline: none; line-height: 1.6; resize: vertical; }
-.prompt-textarea:focus { border-color: #25d366; }
-</style>
+    .page-header p {
+      color: #666;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      margin-bottom: 16px;
+    }
+
+    .card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a1a2e;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-card .num {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .stat-card .label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .stat-card .change {
+      font-size: 12px;
+      color: #25d366;
+      margin-top: 4px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      background: #f5f5f5;
+      padding: 4px;
+      border-radius: 8px;
+      width: fit-content;
+    }
+
+    .tab {
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: white;
+      color: #1a1a2e;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Sandbox */
+    .sandbox-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .sandbox-chat {
+      background: #e5ddd5;
+      border-radius: 12px;
+      padding: 16px;
+      height: 500px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sandbox-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .sandbox-msg {
+      max-width: 75%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .sandbox-msg.bot {
+      background: white;
+      align-self: flex-start;
+      border-top-left-radius: 0;
+    }
+
+    .sandbox-msg.user {
+      background: #d9fdd3;
+      align-self: flex-end;
+      border-top-right-radius: 0;
+    }
+
+    .sandbox-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sandbox-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .sandbox-send {
+      padding: 8px 16px;
+      background: #25d366;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .correction-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .correction-panel h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    .selected-msg {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      min-height: 60px;
+      color: #666;
+    }
+
+    .correction-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .correction-input:focus {
+      border-color: #25d366;
+    }
+
+    .apply-btn {
+      padding: 10px 20px;
+      background: #25d366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .apply-btn:hover {
+      background: #1da851;
+    }
+
+    .apply-btn:disabled {
+      background: #ccc;
+      cursor: default;
+    }
+
+    .success-msg {
+      background: #d4edda;
+      color: #155724;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+    }
+
+    /* Learning prompt versions */
+    .version-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .version-item {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .version-item.active-version {
+      border-color: #25d366;
+      background: #f0fff4;
+    }
+
+    .version-meta {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .version-num {
+      font-weight: 700;
+      font-size: 14px;
+      color: #1a1a2e;
+    }
+
+    .rollback-btn {
+      padding: 5px 12px;
+      background: transparent;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .rollback-btn:hover {
+      border-color: #ff6b35;
+      color: #ff6b35;
+    }
+
+    /* Knowledge base */
+    .kb-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .kb-item {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .kb-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+
+    .kb-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: #1a1a2e;
+    }
+
+    .kb-category {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .kb-content {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .kb-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .edit-btn {
+      padding: 4px 10px;
+      background: transparent;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .edit-btn:hover {
+      border-color: #007bff;
+      color: #007bff;
+    }
+
+    /* Add form */
+    .add-form {
+      background: #f9f9f9;
+      border: 1px dashed #ccc;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .add-form.show {
+      display: block;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      border-color: #25d366;
+    }
+
+    .form-textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-textarea:focus {
+      border-color: #25d366;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .save-btn {
+      padding: 8px 20px;
+      background: #25d366;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .cancel-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* Leads table */
+    .leads-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .leads-table th {
+      background: #f5f5f5;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      color: #666;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .leads-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .leads-table tr:hover td {
+      background: #fafafa;
+    }
+
+    .score-badge {
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .score-high {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .score-mid {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .score-low {
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    .status-badge {
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .status-active {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .status-handed {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-dormant {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .add-new-btn {
+      padding: 8px 16px;
+      background: #25d366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* System prompt */
+    .prompt-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+      min-height: 400px;
+      outline: none;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .prompt-textarea:focus {
+      border-color: #25d366;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- Sidebar -->
-<div class="sidebar">
-  <div class="sidebar-logo">
-    <h2>Meera Admin</h2>
-    <p>Hey Concrete AI</p>
-  </div>
-  <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
-  <div class="nav-item" onclick="showPage('sandbox')"><span class="nav-icon">🧪</span> Sandbox</div>
-  <div class="nav-item" onclick="showPage('learning')"><span class="nav-icon">🧠</span> Learning Prompt</div>
-  <div class="nav-item" onclick="showPage('knowledge')"><span class="nav-icon">📚</span> Knowledge Base</div>
-  <div class="nav-item" onclick="showPage('locations')"><span class="nav-icon">📍</span> Locations</div>
-  <div class="nav-item" onclick="showPage('system')"><span class="nav-icon">⚙️</span> System Prompt</div>
-  <div class="nav-item" onclick="showPage('leads')"><span class="nav-icon">👥</span> Leads</div>
-</div>
-
-<!-- Main content -->
-<div class="main">
-
-  <!-- DASHBOARD -->
-  <div class="page active" id="page-dashboard">
-    <div class="page-header">
-      <h1>Dashboard</h1>
-      <p>Overview of Meera's performance</p>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h2>Meera Admin</h2>
+      <p>Hey Concrete AI</p>
     </div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="num" id="stat-total">—</div><div class="label">Total Conversations</div></div>
-      <div class="stat-card"><div class="num" id="stat-qualified">—</div><div class="label">Qualified Leads (70+)</div></div>
-      <div class="stat-card"><div class="num" id="stat-handover">—</div><div class="label">Handed to Sales</div></div>
-      <div class="stat-card"><div class="num" id="stat-rules">—</div><div class="label">Learning Rules</div></div>
-    </div>
-    <div class="card">
-      <h3>Recent Conversations</h3>
-      <table class="leads-table" id="recent-table">
-        <thead><tr><th>Session</th><th>Name</th><th>City</th><th>Score</th><th>Status</th><th>Last Active</th></tr></thead>
-        <tbody id="recent-tbody"></tbody>
-      </table>
-    </div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('sandbox')"><span class="nav-icon">🧪</span> Sandbox</div>
+    <div class="nav-item" onclick="showPage('learning')"><span class="nav-icon">🧠</span> Learning Prompt</div>
+    <div class="nav-item" onclick="showPage('knowledge')"><span class="nav-icon">📚</span> Knowledge Base</div>
+    <div class="nav-item" onclick="showPage('locations')"><span class="nav-icon">📍</span> Locations</div>
+    <div class="nav-item" onclick="showPage('system')"><span class="nav-icon">⚙️</span> System Prompt</div>
+    <div class="nav-item" onclick="showPage('leads')"><span class="nav-icon">👥</span> Leads</div>
   </div>
 
-  <!-- SANDBOX -->
-  <div class="page" id="page-sandbox">
-    <div class="page-header">
-      <h1>Sandbox Testing</h1>
-      <p>Test conversations and correct Meera's behavior in real-time</p>
+  <!-- Main content -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Overview of Meera's performance</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="num" id="stat-total">—</div>
+          <div class="label">Total Conversations</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="stat-qualified">—</div>
+          <div class="label">Qualified Leads (70+)</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="stat-handover">—</div>
+          <div class="label">Handed to Sales</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="stat-rules">—</div>
+          <div class="label">Learning Rules</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Recent Conversations</h3>
+        <table class="leads-table" id="recent-table">
+          <thead>
+            <tr>
+              <th>Session</th>
+              <th>Name</th>
+              <th>City</th>
+              <th>Score</th>
+              <th>Status</th>
+              <th>Last Active</th>
+            </tr>
+          </thead>
+          <tbody id="recent-tbody"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="sandbox-layout">
-      <!-- Chat -->
-      <div>
-        <div class="card" style="padding:0;overflow:hidden;">
-          <div style="background:#075e54;padding:12px 16px;display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;font-size:16px;">👩</div>
-            <div><div style="color:white;font-weight:600;font-size:14px;">Meera — Sandbox</div><div style="color:#25d366;font-size:11px;">Testing Mode</div></div>
-            <button onclick="resetSandbox()" style="margin-left:auto;padding:4px 10px;background:rgba(255,255,255,0.2);border:none;color:white;border-radius:12px;cursor:pointer;font-size:11px;">Reset</button>
-          </div>
-          <div class="sandbox-chat" style="border-radius:0;">
-            <div class="sandbox-messages" id="sandboxMessages">
-              <div class="sandbox-msg bot">Namaste! 🙏 I'm Meera from Hey Concrete. How can I help you today? 😊</div>
+
+    <!-- SANDBOX -->
+    <div class="page" id="page-sandbox">
+      <div class="page-header">
+        <h1>Sandbox Testing</h1>
+        <p>Test conversations and correct Meera's behavior in real-time</p>
+      </div>
+      <div class="sandbox-layout">
+        <!-- Chat -->
+        <div>
+          <div class="card" style="padding:0;overflow:hidden;">
+            <div style="background:#075e54;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+              <div
+                style="width:36px;height:36px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                👩</div>
+              <div>
+                <div style="color:white;font-weight:600;font-size:14px;">Meera — Sandbox</div>
+                <div style="color:#25d366;font-size:11px;">Testing Mode</div>
+              </div>
+              <button onclick="resetSandbox()"
+                style="margin-left:auto;padding:4px 10px;background:rgba(255,255,255,0.2);border:none;color:white;border-radius:12px;cursor:pointer;font-size:11px;">Reset</button>
             </div>
-            <div class="sandbox-input-row">
-              <input class="sandbox-input" id="sandboxInput" placeholder="Type a test message..." onkeydown="if(event.key==='Enter')sendSandbox()">
-              <button class="sandbox-send" onclick="sendSandbox()">Send</button>
+            <div class="sandbox-chat" style="border-radius:0;">
+              <div class="sandbox-messages" id="sandboxMessages">
+                <div class="sandbox-msg bot">Namaste! 🙏 I'm Meera from Hey Concrete. How can I help you today? 😊</div>
+              </div>
+              <div class="sandbox-input-row">
+                <input class="sandbox-input" id="sandboxInput" placeholder="Type a test message..."
+                  onkeydown="if(event.key==='Enter')sendSandbox()">
+                <button class="sandbox-send" onclick="sendSandbox()">Send</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Correction panel -->
-      <div>
-        <div class="card">
-          <h3>🔧 Correct Meera's Response</h3>
-          <div class="correction-panel">
-            <div>
-              <p style="font-size:12px;color:#888;margin-bottom:6px;">Selected bot response (click any bot message to select):</p>
-              <div class="selected-msg" id="selectedMsg">Click on a bot message in the sandbox to select it for correction...</div>
+        <!-- Correction panel -->
+        <div>
+          <div class="card">
+            <h3>🔧 Correct Meera's Response</h3>
+            <div class="correction-panel">
+              <div>
+                <p style="font-size:12px;color:#888;margin-bottom:6px;">Selected bot response (click any bot message to
+                  select):</p>
+                <div class="selected-msg" id="selectedMsg">Click on a bot message in the sandbox to select it for
+                  correction...</div>
+              </div>
+              <div>
+                <p style="font-size:12px;color:#888;margin-bottom:6px;">Your correction:</p>
+                <textarea class="correction-input" id="correctionInput"
+                  placeholder="Example: Instead of saying 'Sure', say 'Kyo nahi' to sound more warm and Indian..."></textarea>
+              </div>
+              <button class="apply-btn" id="applyBtn" onclick="applyCorrection()">✓ Apply & Train Bot</button>
+              <div class="success-msg" id="successMsg">✅ Correction applied! Meera will follow this rule in all future
+                conversations.</div>
             </div>
-            <div>
-              <p style="font-size:12px;color:#888;margin-bottom:6px;">Your correction:</p>
-              <textarea class="correction-input" id="correctionInput" placeholder="Example: Instead of saying 'Sure', say 'Kyo nahi' to sound more warm and Indian..."></textarea>
-            </div>
-            <button class="apply-btn" id="applyBtn" onclick="applyCorrection()">✓ Apply & Train Bot</button>
-            <div class="success-msg" id="successMsg">✅ Correction applied! Meera will follow this rule in all future conversations.</div>
+          </div>
+
+          <div class="card">
+            <h3>📊 Active Learning Rules</h3>
+            <div id="activeRules" style="font-size:13px;color:#666;line-height:1.8;">Loading...</div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div class="card">
-          <h3>📊 Active Learning Rules</h3>
-          <div id="activeRules" style="font-size:13px;color:#666;line-height:1.8;">Loading...</div>
+    <!-- LEARNING PROMPT -->
+    <div class="page" id="page-learning">
+      <div class="page-header">
+        <h1>Learning Prompt</h1>
+        <p>Version history and rollback — auto-updated when corrections are applied</p>
+      </div>
+      <div class="card">
+        <h3>Current Active Rules</h3>
+        <div id="currentRulesDisplay"
+          style="font-family:monospace;font-size:13px;background:#f9f9f9;padding:16px;border-radius:8px;min-height:100px;white-space:pre-wrap;line-height:1.8;">
+          Loading...</div>
+      </div>
+      <div class="card">
+        <h3>Version History & Rollback</h3>
+        <div class="version-list" id="versionList">Loading...</div>
+      </div>
+    </div>
+
+    <!-- KNOWLEDGE BASE -->
+    <div class="page" id="page-knowledge">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <h1>Knowledge Base</h1>
+          <p>Product FAQs, material info, pricing details</p>
+        </div>
+        <button class="add-new-btn" onclick="toggleAddForm()">+ Add Entry</button>
+      </div>
+      <div class="add-form" id="addKBForm">
+        <div class="form-row">
+          <input class="form-input" id="kb-title" placeholder="Title (e.g. What is Hey Concrete?)">
+          <select class="form-input" id="kb-category">
+            <option value="general">General</option>
+            <option value="product">Product</option>
+            <option value="pricing">Pricing</option>
+            <option value="installation">Installation</option>
+            <option value="faq">FAQ</option>
+          </select>
+        </div>
+        <textarea class="form-textarea" id="kb-content"
+          placeholder="Content — detailed information the bot will use to answer questions..."></textarea>
+        <div class="form-actions" style="margin-top:10px;">
+          <button class="save-btn" onclick="saveKBEntry()">Save Entry</button>
+          <button class="cancel-btn" onclick="toggleAddForm()">Cancel</button>
+        </div>
+      </div>
+      <div class="kb-grid" id="kbGrid">Loading...</div>
+    </div>
+
+    <!-- LOCATIONS -->
+    <div class="page" id="page-locations">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <h1>Showroom Locations</h1>
+          <p>City showroom data — bot uses this to suggest nearest dealer</p>
+        </div>
+        <button class="add-new-btn" onclick="toggleLocForm()">+ Add Location</button>
+      </div>
+      <div class="add-form" id="addLocForm">
+        <div class="form-row">
+          <input class="form-input" id="loc-city" placeholder="City">
+          <input class="form-input" id="loc-state" placeholder="State">
+        </div>
+        <div class="form-row">
+          <input class="form-input" id="loc-name" placeholder="Showroom Name">
+          <input class="form-input" id="loc-contact" placeholder="Contact Number">
+        </div>
+        <input class="form-input" id="loc-address" placeholder="Full Address" style="width:100%;margin-bottom:10px;">
+        <div class="form-actions">
+          <button class="save-btn" onclick="saveLocation()">Save Location</button>
+          <button class="cancel-btn" onclick="toggleLocForm()">Cancel</button>
+        </div>
+      </div>
+      <div id="locGrid" class="kb-grid">Loading...</div>
+    </div>
+
+    <!-- SYSTEM PROMPT -->
+    <div class="page" id="page-system">
+      <div class="page-header">
+        <h1>System Prompt</h1>
+        <p>Base AI personality — defines who Meera is and how she behaves</p>
+      </div>
+      <div class="card">
+        <h3>Active System Prompt <span style="font-size:12px;color:#888;" id="spVersion"></span></h3>
+        <textarea class="prompt-textarea" id="systemPromptText">Loading...</textarea>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+          <button class="save-btn" onclick="saveSystemPrompt()">Save New Version</button>
+          <span style="font-size:12px;color:#888;">Saving creates a new version. Previous versions are preserved.</span>
         </div>
       </div>
     </div>
+
+    <!-- LEADS -->
+    <div class="page" id="page-leads">
+      <div class="page-header">
+        <h1>Leads & Conversations</h1>
+        <p>All customer conversations with lead scores</p>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="tab active" onclick="filterLeads('all', this)">All</button>
+          <button class="tab" onclick="filterLeads('active', this)">Active</button>
+          <button class="tab" onclick="filterLeads('handed-over', this)">Handed Over</button>
+          <button class="tab" onclick="filterLeads('dormant', this)">Dormant</button>
+        </div>
+        <table class="leads-table">
+          <thead>
+            <tr>
+              <th>Session</th>
+              <th>Name</th>
+              <th>City</th>
+              <th>Interest</th>
+              <th>Score</th>
+              <th>Status</th>
+              <th>Last Active</th>
+            </tr>
+          </thead>
+          <tbody id="leads-tbody">Loading...</tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
-  <!-- LEARNING PROMPT -->
-  <div class="page" id="page-learning">
-    <div class="page-header">
-      <h1>Learning Prompt</h1>
-      <p>Version history and rollback — auto-updated when corrections are applied</p>
-    </div>
-    <div class="card">
-      <h3>Current Active Rules</h3>
-      <div id="currentRulesDisplay" style="font-family:monospace;font-size:13px;background:#f9f9f9;padding:16px;border-radius:8px;min-height:100px;white-space:pre-wrap;line-height:1.8;">Loading...</div>
-    </div>
-    <div class="card">
-      <h3>Version History & Rollback</h3>
-      <div class="version-list" id="versionList">Loading...</div>
-    </div>
-  </div>
+  <script>
+    const API_URL = 'https://meera-chatbot-1.onrender.com'; // Replace with your backend URL
+    let sandboxSessionId = null;
+    let selectedBotMessage = null;
 
-  <!-- KNOWLEDGE BASE -->
-  <div class="page" id="page-knowledge">
-    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
-      <div><h1>Knowledge Base</h1><p>Product FAQs, material info, pricing details</p></div>
-      <button class="add-new-btn" onclick="toggleAddForm()">+ Add Entry</button>
-    </div>
-    <div class="add-form" id="addKBForm">
-      <div class="form-row">
-        <input class="form-input" id="kb-title" placeholder="Title (e.g. What is Hey Concrete?)">
-        <select class="form-input" id="kb-category">
-          <option value="general">General</option>
-          <option value="product">Product</option>
-          <option value="pricing">Pricing</option>
-          <option value="installation">Installation</option>
-          <option value="faq">FAQ</option>
-        </select>
-      </div>
-      <textarea class="form-textarea" id="kb-content" placeholder="Content — detailed information the bot will use to answer questions..."></textarea>
-      <div class="form-actions" style="margin-top:10px;">
-        <button class="save-btn" onclick="saveKBEntry()">Save Entry</button>
-        <button class="cancel-btn" onclick="toggleAddForm()">Cancel</button>
-      </div>
-    </div>
-    <div class="kb-grid" id="kbGrid">Loading...</div>
-  </div>
+    // Navigation
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      event.currentTarget.classList.add('active');
 
-  <!-- LOCATIONS -->
-  <div class="page" id="page-locations">
-    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
-      <div><h1>Showroom Locations</h1><p>City showroom data — bot uses this to suggest nearest dealer</p></div>
-      <button class="add-new-btn" onclick="toggleLocForm()">+ Add Location</button>
-    </div>
-    <div class="add-form" id="addLocForm">
-      <div class="form-row">
-        <input class="form-input" id="loc-city" placeholder="City">
-        <input class="form-input" id="loc-state" placeholder="State">
-      </div>
-      <div class="form-row">
-        <input class="form-input" id="loc-name" placeholder="Showroom Name">
-        <input class="form-input" id="loc-contact" placeholder="Contact Number">
-      </div>
-      <input class="form-input" id="loc-address" placeholder="Full Address" style="width:100%;margin-bottom:10px;">
-      <div class="form-actions">
-        <button class="save-btn" onclick="saveLocation()">Save Location</button>
-        <button class="cancel-btn" onclick="toggleLocForm()">Cancel</button>
-      </div>
-    </div>
-    <div id="locGrid" class="kb-grid">Loading...</div>
-  </div>
+      if (page === 'dashboard') loadDashboard();
+      if (page === 'learning') loadLearningPrompt();
+      if (page === 'knowledge') loadKnowledge();
+      if (page === 'locations') loadLocations();
+      if (page === 'system') loadSystemPrompt();
+      if (page === 'leads') loadLeads('all');
+      if (page === 'sandbox') loadActiveRules();
+    }
 
-  <!-- SYSTEM PROMPT -->
-  <div class="page" id="page-system">
-    <div class="page-header">
-      <h1>System Prompt</h1>
-      <p>Base AI personality — defines who Meera is and how she behaves</p>
-    </div>
-    <div class="card">
-      <h3>Active System Prompt <span style="font-size:12px;color:#888;" id="spVersion"></span></h3>
-      <textarea class="prompt-textarea" id="systemPromptText">Loading...</textarea>
-      <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
-        <button class="save-btn" onclick="saveSystemPrompt()">Save New Version</button>
-        <span style="font-size:12px;color:#888;">Saving creates a new version. Previous versions are preserved.</span>
-      </div>
-    </div>
-  </div>
+    // Dashboard
+    async function loadDashboard() {
+      try {
+        const [convRes, lpRes] = await Promise.all([
+          fetch(`${API_URL}/api/admin/conversations`),
+          fetch(`${API_URL}/api/admin/learning-prompt`)
+        ]);
+        const conversations = await convRes.json();
+        const lp = await lpRes.json();
 
-  <!-- LEADS -->
-  <div class="page" id="page-leads">
-    <div class="page-header">
-      <h1>Leads & Conversations</h1>
-      <p>All customer conversations with lead scores</p>
-    </div>
-    <div class="card">
-      <div style="display:flex;gap:8px;margin-bottom:16px;">
-        <button class="tab active" onclick="filterLeads('all', this)">All</button>
-        <button class="tab" onclick="filterLeads('active', this)">Active</button>
-        <button class="tab" onclick="filterLeads('handed-over', this)">Handed Over</button>
-        <button class="tab" onclick="filterLeads('dormant', this)">Dormant</button>
-      </div>
-      <table class="leads-table">
-        <thead><tr><th>Session</th><th>Name</th><th>City</th><th>Interest</th><th>Score</th><th>Status</th><th>Last Active</th></tr></thead>
-        <tbody id="leads-tbody">Loading...</tbody>
-      </table>
-    </div>
-  </div>
+        document.getElementById('stat-total').textContent = conversations.length;
+        document.getElementById('stat-qualified').textContent = conversations.filter(c => c.leadScore >= 70).length;
+        document.getElementById('stat-handover').textContent = conversations.filter(c => c.handoverTriggered).length;
+        document.getElementById('stat-rules').textContent = lp?.rules?.length || 0;
 
-</div>
-
-<script>
-const API_URL = 'https://YOUR-BACKEND-URL.onrender.com'; // Replace with your backend URL
-let sandboxSessionId = null;
-let selectedBotMessage = null;
-
-// Navigation
-function showPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  event.currentTarget.classList.add('active');
-
-  if (page === 'dashboard') loadDashboard();
-  if (page === 'learning') loadLearningPrompt();
-  if (page === 'knowledge') loadKnowledge();
-  if (page === 'locations') loadLocations();
-  if (page === 'system') loadSystemPrompt();
-  if (page === 'leads') loadLeads('all');
-  if (page === 'sandbox') loadActiveRules();
-}
-
-// Dashboard
-async function loadDashboard() {
-  try {
-    const [convRes, lpRes] = await Promise.all([
-      fetch(`${API_URL}/api/admin/conversations`),
-      fetch(`${API_URL}/api/admin/learning-prompt`)
-    ]);
-    const conversations = await convRes.json();
-    const lp = await lpRes.json();
-
-    document.getElementById('stat-total').textContent = conversations.length;
-    document.getElementById('stat-qualified').textContent = conversations.filter(c => c.leadScore >= 70).length;
-    document.getElementById('stat-handover').textContent = conversations.filter(c => c.handoverTriggered).length;
-    document.getElementById('stat-rules').textContent = lp?.rules?.length || 0;
-
-    const tbody = document.getElementById('recent-tbody');
-    tbody.innerHTML = conversations.slice(0, 10).map(c => `
+        const tbody = document.getElementById('recent-tbody');
+        tbody.innerHTML = conversations.slice(0, 10).map(c => `
       <tr>
         <td style="font-family:monospace;font-size:11px;color:#888;">${c.sessionId.slice(-8)}</td>
         <td>${c.leadData?.name || '—'}</td>
@@ -367,111 +907,111 @@ async function loadDashboard() {
         <td style="color:#888;font-size:12px;">${new Date(c.lastMessageAt).toLocaleString()}</td>
       </tr>
     `).join('');
-  } catch (err) { console.error(err); }
-}
+      } catch (err) { console.error(err); }
+    }
 
-// Sandbox
-async function sendSandbox() {
-  const input = document.getElementById('sandboxInput');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
+    // Sandbox
+    async function sendSandbox() {
+      const input = document.getElementById('sandboxInput');
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = '';
 
-  addSandboxMsg(msg, 'user');
+      addSandboxMsg(msg, 'user');
 
-  try {
-    const res = await fetch(`${API_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId: sandboxSessionId, message: msg, channel: 'sandbox' })
-    });
-    const data = await res.json();
-    sandboxSessionId = data.sessionId;
-    addSandboxMsg(data.message, 'bot');
-  } catch (err) {
-    addSandboxMsg('Error connecting to backend', 'bot');
-  }
-}
+      try {
+        const res = await fetch(`${API_URL}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: sandboxSessionId, message: msg, channel: 'sandbox' })
+        });
+        const data = await res.json();
+        sandboxSessionId = data.sessionId;
+        addSandboxMsg(data.message, 'bot');
+      } catch (err) {
+        addSandboxMsg('Error connecting to backend', 'bot');
+      }
+    }
 
-function addSandboxMsg(text, role) {
-  const container = document.getElementById('sandboxMessages');
-  const div = document.createElement('div');
-  div.className = `sandbox-msg ${role}`;
-  div.textContent = text;
-  if (role === 'bot') {
-    div.style.cursor = 'pointer';
-    div.title = 'Click to select for correction';
-    div.onclick = () => selectBotMessage(text, div);
-  }
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
+    function addSandboxMsg(text, role) {
+      const container = document.getElementById('sandboxMessages');
+      const div = document.createElement('div');
+      div.className = `sandbox-msg ${role}`;
+      div.textContent = text;
+      if (role === 'bot') {
+        div.style.cursor = 'pointer';
+        div.title = 'Click to select for correction';
+        div.onclick = () => selectBotMessage(text, div);
+      }
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
 
-function selectBotMessage(text, el) {
-  document.querySelectorAll('.sandbox-msg.bot').forEach(m => m.style.background = 'white');
-  el.style.background = '#fff3cd';
-  selectedBotMessage = text;
-  document.getElementById('selectedMsg').textContent = text;
-}
+    function selectBotMessage(text, el) {
+      document.querySelectorAll('.sandbox-msg.bot').forEach(m => m.style.background = 'white');
+      el.style.background = '#fff3cd';
+      selectedBotMessage = text;
+      document.getElementById('selectedMsg').textContent = text;
+    }
 
-async function applyCorrection() {
-  const correction = document.getElementById('correctionInput').value.trim();
-  if (!correction) return alert('Please enter a correction');
+    async function applyCorrection() {
+      const correction = document.getElementById('correctionInput').value.trim();
+      if (!correction) return alert('Please enter a correction');
 
-  const btn = document.getElementById('applyBtn');
-  btn.disabled = true;
-  btn.textContent = 'Applying...';
+      const btn = document.getElementById('applyBtn');
+      btn.disabled = true;
+      btn.textContent = 'Applying...';
 
-  try {
-    const res = await fetch(`${API_URL}/api/admin/correction`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ originalResponse: selectedBotMessage, correction })
-    });
-    const data = await res.json();
+      try {
+        const res = await fetch(`${API_URL}/api/admin/correction`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ originalResponse: selectedBotMessage, correction })
+        });
+        const data = await res.json();
 
-    document.getElementById('successMsg').style.display = 'block';
-    document.getElementById('correctionInput').value = '';
-    document.getElementById('selectedMsg').textContent = 'Click on a bot message to select it...';
-    selectedBotMessage = null;
-    loadActiveRules();
+        document.getElementById('successMsg').style.display = 'block';
+        document.getElementById('correctionInput').value = '';
+        document.getElementById('selectedMsg').textContent = 'Click on a bot message to select it...';
+        selectedBotMessage = null;
+        loadActiveRules();
 
-    setTimeout(() => { document.getElementById('successMsg').style.display = 'none'; }, 4000);
-  } catch (err) { alert('Error applying correction'); }
+        setTimeout(() => { document.getElementById('successMsg').style.display = 'none'; }, 4000);
+      } catch (err) { alert('Error applying correction'); }
 
-  btn.disabled = false;
-  btn.textContent = '✓ Apply & Train Bot';
-}
+      btn.disabled = false;
+      btn.textContent = '✓ Apply & Train Bot';
+    }
 
-function resetSandbox() {
-  sandboxSessionId = null;
-  document.getElementById('sandboxMessages').innerHTML = '<div class="sandbox-msg bot">Namaste! 🙏 I\'m Meera from Hey Concrete. How can I help you today? 😊</div>';
-}
+    function resetSandbox() {
+      sandboxSessionId = null;
+      document.getElementById('sandboxMessages').innerHTML = '<div class="sandbox-msg bot">Namaste! 🙏 I\'m Meera from Hey Concrete. How can I help you today? 😊</div>';
+    }
 
-async function loadActiveRules() {
-  try {
-    const res = await fetch(`${API_URL}/api/admin/learning-prompt`);
-    const data = await res.json();
-    const rules = data?.rules || [];
-    document.getElementById('activeRules').innerHTML = rules.length
-      ? rules.map((r, i) => `<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;">${i+1}. ${r.rule}</div>`).join('')
-      : '<span style="color:#aaa;">No corrections yet. Test the bot and apply corrections.</span>';
-  } catch (err) { console.error(err); }
-}
+    async function loadActiveRules() {
+      try {
+        const res = await fetch(`${API_URL}/api/admin/learning-prompt`);
+        const data = await res.json();
+        const rules = data?.rules || [];
+        document.getElementById('activeRules').innerHTML = rules.length
+          ? rules.map((r, i) => `<div style="padding:4px 0;border-bottom:1px solid #f0f0f0;">${i + 1}. ${r.rule}</div>`).join('')
+          : '<span style="color:#aaa;">No corrections yet. Test the bot and apply corrections.</span>';
+      } catch (err) { console.error(err); }
+    }
 
-// Learning Prompt
-async function loadLearningPrompt() {
-  try {
-    const [currentRes, versionsRes] = await Promise.all([
-      fetch(`${API_URL}/api/admin/learning-prompt`),
-      fetch(`${API_URL}/api/admin/learning-prompt/versions`)
-    ]);
-    const current = await currentRes.json();
-    const versions = await versionsRes.json();
+    // Learning Prompt
+    async function loadLearningPrompt() {
+      try {
+        const [currentRes, versionsRes] = await Promise.all([
+          fetch(`${API_URL}/api/admin/learning-prompt`),
+          fetch(`${API_URL}/api/admin/learning-prompt/versions`)
+        ]);
+        const current = await currentRes.json();
+        const versions = await versionsRes.json();
 
-    document.getElementById('currentRulesDisplay').textContent = current?.fullContent || 'No rules yet.';
+        document.getElementById('currentRulesDisplay').textContent = current?.fullContent || 'No rules yet.';
 
-    document.getElementById('versionList').innerHTML = versions.map(v => `
+        document.getElementById('versionList').innerHTML = versions.map(v => `
       <div class="version-item ${v.isActive ? 'active-version' : ''}">
         <div>
           <div class="version-num">Version ${v.version} ${v.isActive ? '✓ Active' : ''}</div>
@@ -480,23 +1020,23 @@ async function loadLearningPrompt() {
         ${!v.isActive ? `<button class="rollback-btn" onclick="rollback(${v.version})">Rollback</button>` : '<span style="font-size:12px;color:#25d366;">Current</span>'}
       </div>
     `).join('');
-  } catch (err) { console.error(err); }
-}
+      } catch (err) { console.error(err); }
+    }
 
-async function rollback(version) {
-  if (!confirm(`Rollback to version ${version}?`)) return;
-  try {
-    await fetch(`${API_URL}/api/admin/learning-prompt/rollback/${version}`, { method: 'POST' });
-    loadLearningPrompt();
-  } catch (err) { alert('Rollback failed'); }
-}
+    async function rollback(version) {
+      if (!confirm(`Rollback to version ${version}?`)) return;
+      try {
+        await fetch(`${API_URL}/api/admin/learning-prompt/rollback/${version}`, { method: 'POST' });
+        loadLearningPrompt();
+      } catch (err) { alert('Rollback failed'); }
+    }
 
-// Knowledge Base
-async function loadKnowledge() {
-  try {
-    const res = await fetch(`${API_URL}/api/admin/knowledge`);
-    const entries = await res.json();
-    document.getElementById('kbGrid').innerHTML = entries.map(e => `
+    // Knowledge Base
+    async function loadKnowledge() {
+      try {
+        const res = await fetch(`${API_URL}/api/admin/knowledge`);
+        const entries = await res.json();
+        document.getElementById('kbGrid').innerHTML = entries.map(e => `
       <div class="kb-item">
         <div class="kb-item-header">
           <div class="kb-title">${e.title}</div>
@@ -505,39 +1045,39 @@ async function loadKnowledge() {
         <div class="kb-content">${e.content.substring(0, 200)}${e.content.length > 200 ? '...' : ''}</div>
       </div>
     `).join('');
-  } catch (err) { document.getElementById('kbGrid').innerHTML = '<p style="color:#888">Failed to load</p>'; }
-}
+      } catch (err) { document.getElementById('kbGrid').innerHTML = '<p style="color:#888">Failed to load</p>'; }
+    }
 
-function toggleAddForm() {
-  const form = document.getElementById('addKBForm');
-  form.classList.toggle('show');
-}
+    function toggleAddForm() {
+      const form = document.getElementById('addKBForm');
+      form.classList.toggle('show');
+    }
 
-async function saveKBEntry() {
-  const title = document.getElementById('kb-title').value.trim();
-  const content = document.getElementById('kb-content').value.trim();
-  const category = document.getElementById('kb-category').value;
-  if (!title || !content) return alert('Title and content required');
+    async function saveKBEntry() {
+      const title = document.getElementById('kb-title').value.trim();
+      const content = document.getElementById('kb-content').value.trim();
+      const category = document.getElementById('kb-category').value;
+      if (!title || !content) return alert('Title and content required');
 
-  try {
-    await fetch(`${API_URL}/api/admin/knowledge`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, category })
-    });
-    document.getElementById('kb-title').value = '';
-    document.getElementById('kb-content').value = '';
-    toggleAddForm();
-    loadKnowledge();
-  } catch (err) { alert('Save failed'); }
-}
+      try {
+        await fetch(`${API_URL}/api/admin/knowledge`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content, category })
+        });
+        document.getElementById('kb-title').value = '';
+        document.getElementById('kb-content').value = '';
+        toggleAddForm();
+        loadKnowledge();
+      } catch (err) { alert('Save failed'); }
+    }
 
-// Locations
-async function loadLocations() {
-  try {
-    const res = await fetch(`${API_URL}/api/admin/locations`);
-    const locations = await res.json();
-    document.getElementById('locGrid').innerHTML = locations.map(l => `
+    // Locations
+    async function loadLocations() {
+      try {
+        const res = await fetch(`${API_URL}/api/admin/locations`);
+        const locations = await res.json();
+        document.getElementById('locGrid').innerHTML = locations.map(l => `
       <div class="kb-item">
         <div class="kb-item-header">
           <div class="kb-title">${l.city}, ${l.state}</div>
@@ -546,66 +1086,66 @@ async function loadLocations() {
         <div class="kb-content"><strong>${l.showroomName}</strong><br>${l.address}<br>📞 ${l.contact}</div>
       </div>
     `).join('');
-  } catch (err) { document.getElementById('locGrid').innerHTML = '<p style="color:#888">Failed to load</p>'; }
-}
+      } catch (err) { document.getElementById('locGrid').innerHTML = '<p style="color:#888">Failed to load</p>'; }
+    }
 
-function toggleLocForm() {
-  document.getElementById('addLocForm').classList.toggle('show');
-}
+    function toggleLocForm() {
+      document.getElementById('addLocForm').classList.toggle('show');
+    }
 
-async function saveLocation() {
-  const city = document.getElementById('loc-city').value.trim();
-  const state = document.getElementById('loc-state').value.trim();
-  const showroomName = document.getElementById('loc-name').value.trim();
-  const contact = document.getElementById('loc-contact').value.trim();
-  const address = document.getElementById('loc-address').value.trim();
-  if (!city) return alert('City required');
+    async function saveLocation() {
+      const city = document.getElementById('loc-city').value.trim();
+      const state = document.getElementById('loc-state').value.trim();
+      const showroomName = document.getElementById('loc-name').value.trim();
+      const contact = document.getElementById('loc-contact').value.trim();
+      const address = document.getElementById('loc-address').value.trim();
+      if (!city) return alert('City required');
 
-  try {
-    await fetch(`${API_URL}/api/admin/locations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ city, state, showroomName, contact, address })
-    });
-    toggleLocForm();
-    loadLocations();
-  } catch (err) { alert('Save failed'); }
-}
+      try {
+        await fetch(`${API_URL}/api/admin/locations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ city, state, showroomName, contact, address })
+        });
+        toggleLocForm();
+        loadLocations();
+      } catch (err) { alert('Save failed'); }
+    }
 
-// System Prompt
-async function loadSystemPrompt() {
-  try {
-    const res = await fetch(`${API_URL}/api/admin/system-prompt`);
-    const data = await res.json();
-    document.getElementById('systemPromptText').value = data?.content || '';
-    document.getElementById('spVersion').textContent = `v${data?.version || 1}`;
-  } catch (err) { console.error(err); }
-}
+    // System Prompt
+    async function loadSystemPrompt() {
+      try {
+        const res = await fetch(`${API_URL}/api/admin/system-prompt`);
+        const data = await res.json();
+        document.getElementById('systemPromptText').value = data?.content || '';
+        document.getElementById('spVersion').textContent = `v${data?.version || 1}`;
+      } catch (err) { console.error(err); }
+    }
 
-async function saveSystemPrompt() {
-  const content = document.getElementById('systemPromptText').value.trim();
-  if (!content) return alert('Content required');
-  if (!confirm('Save as new version?')) return;
+    async function saveSystemPrompt() {
+      const content = document.getElementById('systemPromptText').value.trim();
+      if (!content) return alert('Content required');
+      if (!confirm('Save as new version?')) return;
 
-  try {
-    await fetch(`${API_URL}/api/admin/system-prompt`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content })
-    });
-    alert('Saved!');
-    loadSystemPrompt();
-  } catch (err) { alert('Save failed'); }
-}
+      try {
+        await fetch(`${API_URL}/api/admin/system-prompt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+        alert('Saved!');
+        loadSystemPrompt();
+      } catch (err) { alert('Save failed'); }
+    }
 
-// Leads
-async function loadLeads(status) {
-  try {
-    const url = status === 'all' ? `${API_URL}/api/admin/conversations` : `${API_URL}/api/admin/conversations?status=${status}`;
-    const res = await fetch(url);
-    const conversations = await res.json();
+    // Leads
+    async function loadLeads(status) {
+      try {
+        const url = status === 'all' ? `${API_URL}/api/admin/conversations` : `${API_URL}/api/admin/conversations?status=${status}`;
+        const res = await fetch(url);
+        const conversations = await res.json();
 
-    document.getElementById('leads-tbody').innerHTML = conversations.map(c => `
+        document.getElementById('leads-tbody').innerHTML = conversations.map(c => `
       <tr>
         <td style="font-family:monospace;font-size:11px;color:#888;">${c.sessionId.slice(-8)}</td>
         <td>${c.leadData?.name || '—'}</td>
@@ -616,17 +1156,18 @@ async function loadLeads(status) {
         <td style="color:#888;font-size:12px;">${new Date(c.lastMessageAt).toLocaleString()}</td>
       </tr>
     `).join('');
-  } catch (err) { document.getElementById('leads-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;padding:20px;">Failed to load</td></tr>'; }
-}
+      } catch (err) { document.getElementById('leads-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;padding:20px;">Failed to load</td></tr>'; }
+    }
 
-function filterLeads(status, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  loadLeads(status);
-}
+    function filterLeads(status, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      loadLeads(status);
+    }
 
-// Load dashboard on start
-loadDashboard();
-</script>
+    // Load dashboard on start
+    loadDashboard();
+  </script>
 </body>
+
 </html>

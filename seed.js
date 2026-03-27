@@ -1,6 +1,7 @@
-const mongoose = require('mongoose');
-require('dotenv').config();
-const { Product, Location, KnowledgeBase, SystemPrompt, LearningPrompt } = require('./models');
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
+import { Product, Location, KnowledgeBase, SystemPrompt, LearningPrompt } from './models.js';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
