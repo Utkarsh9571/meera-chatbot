@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-dotenv.config();
 import express, { json as _json } from 'express';
 import { connect } from 'mongoose';
 import cors from 'cors';
@@ -7,11 +6,17 @@ import { randomUUID as uuidv4 } from 'crypto';
 import { Conversation, LearningPrompt, SystemPrompt, KnowledgeBase, Product, Location, CorrectionLog } from './models.js';
 import { chat, applyCorrection } from './aiService.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 app.use(cors({ origin: '*' }));
 app.use(_json());
-app.use(express.static(path.join(process.cwd(), 'frontend')));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Connect MongoDB
 connect(process.env.MONGODB_URI)
@@ -409,11 +414,11 @@ app.get('/api/health', (req, res) => {
 
 // Serve frontend routes explicitly
 app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'frontend', 'index.html'));
+  res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
 });
 
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'frontend', 'admin.html'));
+  res.sendFile(path.join(__dirname, '../frontend', 'admin.html'));
 });
 
 const PORT = process.env.PORT || 5000;
