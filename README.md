@@ -2,9 +2,9 @@
 
 AI-powered sales chatbot for Hey Concrete built for the Clara.ai hiring task.
 
-**Live Demo:** [YOUR_FRONTEND_URL]  
-**Admin Panel:** [YOUR_FRONTEND_URL]/admin.html  
-**Backend API:** [YOUR_BACKEND_URL]
+**Live Demo:** [https://meera-chatbot-h2x8.vercel.app/]  
+**Admin Panel:** [https://meera-chatbot-h2x8.vercel.app/admin.html]  
+**Backend API:** [https://meera-chatbot-1.onrender.com]
 
 ---
 
@@ -12,8 +12,8 @@ AI-powered sales chatbot for Hey Concrete built for the Clara.ai hiring task.
 
 | Layer | Technology |
 |-------|-----------|
-| AI Engine | Google Gemini 1.5 Flash API |
-| Backend | Node.js + Express |
+| AI Engine | Google Gemini 2.5 Flash Lite (ESM) |
+| Backend | Node.js + Express (API-only architecture) |
 | Database | MongoDB Atlas |
 | Frontend | Vanilla HTML/CSS/JS (WhatsApp UI) |
 | Deployment | Render.com (backend) + Vercel (frontend) |
@@ -21,104 +21,79 @@ AI-powered sales chatbot for Hey Concrete built for the Clara.ai hiring task.
 
 ---
 
-## Features Built
+## Architecture & Logic
 
-### ✅ Meera Persona
-Warm, friendly consultant persona. WhatsApp-style UI with green theme. Natural conversation flow collecting lead information in order — name, product interest, city, budget, area, room type, style preference, timeline.
+### 🧠 Deterministic Lead Flow (New)
+Unlike generic chatbots, Meera uses a **State-Machine Logic** in the backend:
+1. **Extraction**: Backend uses robust regex and fuzzy matching to save lead data (Name, City, Budget, etc.).
+2. **Logic**: Node.js calculates exactly which question is next (Name → Product → City → Budget → Area → Room → Style → Timeline).
+3. **Styling**: Google Gemini is used ONLY to rewrite the instruction into a friendly, natural Hinglish WhatsApp message. This prevents the bot from hallucinating or going off-track.
 
-### ✅ Lead Scoring
-Automatic scoring out of 100 based on 5 factors:
-- Budget Alignment (30 pts)
-- Space/Area Known (20 pts)
-- Design Interest (15 pts)
-- Timeline (10 pts)
-- Engagement Quality (25 pts)
+### ✅ Lead Scoring (100 pts)
+Points are awarded as data is collected:
+- **Name**: 5 pts
+- **Product Interest**: 10 pts
+- **City**: 10 pts
+- **Budget Alignment**: 25 pts
+- **Area/Size**: 20 pts
+- **Room Type**: 10 pts
+- **Style Preference**: 10 pts
+- **Timeline**: 10 pts
 
-Score ≥ 70 triggers automatic handover to Kabir (sales team).
+**Score ≥ 70** triggers automatic handover to **Kabir** (sales team expert).
 
-### ✅ Self-Learning System (Key Feature)
+### ✅ Self-Learning System
 Admin panel Sandbox tab allows:
-1. Test conversations with Meera
-2. Click any bot response to select it
-3. Type a correction ("Instead of X, say Y")
-4. Click Apply — AI generates a rule, adds to Learning Prompt
-5. Next conversation immediately follows the new rule
-6. Full version history with one-click rollback
+1. Test conversations with Meera.
+2. Click any bot response to select it.
+3. Type a correction ("Instead of asking X, say Y").
+4. **Apply**: AI generates a rule and saves it to the database. Meera immediately adopts the new behavior.
 
-### ✅ Knowledge Base Management
-Admin panel allows adding, editing product FAQs, pricing info, installation guides — all without code changes or redeployment.
+---
 
-### ✅ Locations Management
-All 25+ showroom locations stored in database. Bot automatically suggests nearest showroom when customer shares city.
+## Project Structure
 
-### ✅ Product Catalog
-All Hey Concrete products pre-loaded: Wall Panels (8+ designs), Breeze Blocks (4 designs), Brick Cladding (3 types), Wall Murals (3 designs). Images mapped from Google Drive.
-
-### ✅ Gupshup WhatsApp Integration
-Webhook endpoint ready at `/api/webhook/gupshup`. Architecture:
-- Gupshup sends incoming messages to webhook URL
-- Backend processes through same chat pipeline
-- Response sent back via Gupshup outbound API
+```text
+/backend
+  ├── server.js      # API routes & initialization
+  ├── aiService.js   # Extraction & Gemini integration
+  ├── models.js      # Mongoose schemas
+  └── .env           # Backend secrets
+/frontend
+  ├── index.html     # WhatsApp Chat UI
+  └── admin.html     # Dashboard & Sandbox
+```
 
 ---
 
 ## How to Run Locally
 
 ```bash
-# Clone repo
+# 1. Clone repo
 git clone https://github.com/YOUR_USERNAME/meera-chatbot
 
-# Backend setup
+# 2. Backend setup
 cd backend
 npm install
-cp .env.example .env
-# Add your MONGODB_URI and GEMINI_API_KEY to .env
+# Add MONGO_URI and GEMINI_API_KEY to backend/.env
 
-# Seed database
-node src/seed.js
+# 3. Start backend
+npm start
 
-# Start backend
-npm run dev
-
-# Frontend — open in browser
-open frontend/index.html
-# Update API_URL in index.html and admin.html to http://localhost:3000
+# 4. Frontend
+# Simply open /frontend/index.html in your browser.
+# Ensure API_URL in index.html points to http://localhost:5000
 ```
 
 ---
 
-## Environment Variables
+## Environment Variables (backend/.env)
 
-```
-MONGODB_URI=mongodb+srv://...
+```env
+MONGO_URI=mongodb+srv://...
 GEMINI_API_KEY=AIza...
-PORT=3000
-FRONTEND_URL=https://your-frontend-url.vercel.app
+PORT=5000
 ```
-
----
-
-## Gupshup WhatsApp Setup
-
-1. Create account at gupshup.io
-2. Create a WhatsApp channel
-3. Set webhook URL to: `https://YOUR_BACKEND/api/webhook/gupshup`
-4. Add Gupshup API key to environment variables
-5. Add outbound message sending in `/api/webhook/gupshup` route using Gupshup's send message API
-
----
-
-## Admin Panel Tabs
-
-| Tab | Purpose |
-|-----|---------|
-| Dashboard | Conversation stats, recent leads |
-| Sandbox | Test bot, apply corrections |
-| Learning Prompt | View rules, version history, rollback |
-| Knowledge Base | Add/edit product FAQs and info |
-| Locations | Manage showroom data |
-| System Prompt | Edit Meera's base personality |
-| Leads | All conversations with lead scores |
 
 ---
 
