@@ -187,9 +187,9 @@ function extractLeadData(message, currentLeadData) {
     }
   }
 
-  // BUDGET — only if not set, and only if message doesn't look like an area statement
+  // BUDGET — only if not already strongly set
   const looksLikeArea = /sqft|sq\.?\s*ft|square\s*feet?/i.test(msgLower);
-  if (!updated.budget && !looksLikeArea) {
+  if (!updated.budget || updated.budget === 'Flexible') {
     if (/no budget|flexible|not fixed|depend|tell me|what.s the|how much/i.test(msgLower)) {
       updated.budget = 'Flexible';
       matched = true;
@@ -203,23 +203,13 @@ function extractLeadData(message, currentLeadData) {
       updated.budget = '₹400+/sqft';
       matched = true;
     } else {
-      // Handle standalone numbers — map to nearest bracket
-      // e.g. "200", "300", "400", "500", "₹350"
       const standaloneNum = msgLower.match(/^[₹rs\.\s]*([\d,]+)\s*(?:\/sqft|\/sq|per sqft)?\s*$/);
       if (standaloneNum) {
         const num = parseInt(standaloneNum[1].replace(/,/g, ''));
-        if (num <= 200) { updated.budget = 'Under ₹200/sqft'; matched = true; }
-        else if (num <= 400) { updated.budget = '₹200-400/sqft'; matched = true; }
-        else { updated.budget = '₹400+/sqft'; matched = true; }
-      } else {
-        // Range like "200 to 400" or "200-400"
-        const rangeMatch = msgLower.match(/(\d+)\s*(?:to|-)\s*(\d+)/);
-        if (rangeMatch) {
-          const lo = parseInt(rangeMatch[1]), hi = parseInt(rangeMatch[2]);
-          if (hi <= 200) { updated.budget = 'Under ₹200/sqft'; matched = true; }
-          else if (lo >= 400) { updated.budget = '₹400+/sqft'; matched = true; }
-          else { updated.budget = '₹200-400/sqft'; matched = true; }
-        }
+        if (num <= 200) updated.budget = 'Under ₹200/sqft';
+        else if (num <= 400) updated.budget = '₹200-400/sqft';
+        else updated.budget = '₹400+/sqft';
+        matched = true;
       }
     }
   }
@@ -284,17 +274,22 @@ function checkManualHandover(message) {
 
 // Determine next step in conversation
 function getNextStep(leadData) {
-  if (!leadData.language) return 'ask_language';
-  if (!leadData.name) return 'ask_name';
-  if (!leadData.productInterest) return 'ask_product';
-  if (!leadData.city) return 'ask_city';
-  if (!leadData.budget) return 'ask_budget';
-  if (!leadData.area) return 'ask_area';
-  if (!leadData.roomType) return 'ask_room';
-  if (!leadData.stylePreference) return 'ask_style';
-  if (!leadData.timeline) return 'ask_timeline';
+  const completed = leadData.completedSteps || [];
+
+  if (!completed.includes('ask_language')) return 'ask_language';
+  if (!completed.includes('ask_name')) return 'ask_name';
+  if (!completed.includes('ask_product')) return 'ask_product';
+  if (!completed.includes('ask_city')) return 'ask_city';
+  if (!completed.includes('ask_budget')) return 'ask_budget';
+  if (!completed.includes('ask_area')) return 'ask_area';
+  if (!completed.includes('ask_room')) return 'ask_room';
+  if (!completed.includes('ask_style')) return 'ask_style';
+  if (!completed.includes('ask_timeline')) return 'ask_timeline';
+
   return 'recommend';
 }
+console.log("LEAD DATA:", updatedLeadData);
+console.log("NEXT STEP:", nextStep);
 
 // Build quick reply suggestions for each step (returned to frontend)
 function getQuickReplies(nextStep, leadData) {
@@ -316,6 +311,29 @@ async function chat(messages, leadData, customerCity) {
 
     // Extract data from message
     const { updated: updatedLeadData } = extractLeadData(lastUserMsg, leadData || {});
+    // Initialize completedSteps if not present
+if (!updatedLeadData.completedSteps) {
+  updatedLeadData.completedSteps = [];
+}
+
+// Track completed steps automatically
+const stepMap = {
+  language: 'ask_language',
+  name: 'ask_name',
+  productInterest: 'ask_product',
+  city: 'ask_city',
+  budget: 'ask_budget',
+  area: 'ask_area',
+  roomType: 'ask_room',
+  stylePreference: 'ask_style',
+  timeline: 'ask_timeline',
+};
+
+Object.keys(stepMap).forEach(key => {
+  if (updatedLeadData[key] && !updatedLeadData.completedSteps.includes(stepMap[key])) {
+    updatedLeadData.completedSteps.push(stepMap[key]);
+  }
+});
 
     // FIX: Check handover BEFORE score check so "can i talk to someone" always works
     const manualHandover = checkManualHandover(lastUserMsg);
@@ -376,8 +394,8 @@ async function chat(messages, leadData, customerCity) {
     const langInstruction = lang === 'hindi'
       ? 'Write mostly in Hindi (Devanagari script is fine, or Roman Hindi). Keep it warm and friendly.'
       : lang === 'english'
-      ? 'Write in clear, warm English only.'
-      : 'Write in natural Hinglish (friendly Indian English with occasional Hindi words like "Namaste", "bilkul", "kya khayal hai", "bahut accha", "shukriya"). Keep it warm and conversational.';
+        ? 'Write in clear, warm English only.'
+        : 'Write in natural Hinglish (friendly Indian English with occasional Hindi words like "Namaste", "bilkul", "kya khayal hai", "bahut accha", "shukriya"). Keep it warm and conversational.';
 
     // Build the full prompt
     const prompt = `You are Meera, a warm and friendly sales consultant from Hey Concrete — a premium concrete wall panels brand in India.
@@ -472,5 +490,6 @@ Respond in JSON only: { "rule": "the specific rule" }`;
     return correction;
   }
 }
+
 
 export { chat, applyCorrection, generateText };
