@@ -378,7 +378,12 @@ Object.keys(stepMap).forEach(key => {
       ask_product: `Ask ${updatedLeadData.name || 'them'} what product they're interested in. Options will be shown as buttons (Wall Panels, Breeze Blocks, Brick Cladding, Wall Murals). Don't re-introduce yourself. Do NOT ask about language again.`,
       ask_city: `Ask which city they're in so you can suggest the nearest Hey Concrete showroom. Don't re-introduce yourself. Do NOT ask about language again.`,
       ask_budget: `Ask about their approximate budget. Mention the ranges (under ₹200/sqft, ₹200-400/sqft, ₹400+/sqft) — buttons will be shown. Keep it conversational. Do NOT ask about language again.`,
-      ask_area: `Ask how much wall area they want to cover approximately in square feet. Mention that even 50 sqft can transform a room. Do NOT ask about language again.`,
+      ask_area: `The customer's budget is already confirmed. DO NOT ask about budget again.
+
+Ask ONLY this:
+How much wall area (in sqft) do they want to cover?
+
+Keep it simple, friendly, and short. Do not mention budget at all.`,
       ask_room: `Ask which room or space this is for. Options like living room, bedroom, office, outdoor will be shown as buttons. Do NOT ask about language again.`,
       ask_style: `Ask about their style preference. Style options (modern, minimalist, rustic, traditional, geometric, textured) will be shown as buttons. Do NOT ask about language again.`,
       ask_timeline: `Last question! Ask when they're planning to start. Timeline options will be shown as buttons. Do NOT ask about language again.`,
@@ -425,16 +430,29 @@ WRITING RULES:
 - Use the customer's name (${updatedLeadData.name || ''}) when appropriate — but NOT in every message
 - Sound like a real WhatsApp conversation, not a form
 - NEVER say you are an AI or bot
-- NEVER re-introduce yourself after the first message — the customer already knows you are Meera
+- NEVER re-introduce yourself after the first message
 - NEVER repeat a question if it was already answered
-- Be warm, enthusiastic, and helpful
-- If customer gave info, acknowledge it naturally before moving on
-- If buttons/options are provided, just mention them naturally — don't list them all out again in your message
+- STRICT RULE: Ask ONLY the question defined in YOUR TASK. Do NOT ask anything else.
+- STRICT RULE: If a field is already filled (like budget, city, etc.), NEVER ask about it again.
+- If customer gave info, acknowledge it briefly and move forward
+- Do NOT rephrase or revisit previous questions
+- If next step is ask_area, ONLY ask about area — NOTHING else
 
 Return ONLY the message text, nothing else.`;
 
     const generatedText = await generateText(prompt);
-    const finalMsg = generatedText.trim().replace(/^["']|["']$/g, '').replace(/^\*+|\*+$/g, '');
+    let finalMsg = generatedText.trim()
+  .replace(/^["']|["']$/g, '')
+  .replace(/^\*+|\*+$/g, '');
+
+// 🚨 HARD FILTER: prevent budget re-asking
+if (updatedLeadData.budget && /budget|₹|price range|cost per sqft/i.test(finalMsg)) {
+  if (nextStep === 'ask_area') {
+    finalMsg = `Got it 👍
+
+Aap approx kitna wall area cover karna chahte hain? (sqft mein) 😊`;
+  }
+}
 
     return {
       message: finalMsg,
