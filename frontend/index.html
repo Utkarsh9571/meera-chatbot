@@ -210,7 +210,7 @@
 
   <script>
     let sessionId = localStorage.getItem("sessionId") || null;
-    const API_URL = 'https://meera-chatbot-1.onrender.com'; // Replace with your backend URL
+    const API_URL = 'https://meera-chatbot-1.onrender.com';
     let isLoading = false;
 
     function getTime() {
@@ -224,35 +224,54 @@
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     }
 
-    function addMessage(content, role) {
+    // Remove all quick reply rows from the chat (called when user responds)
+    function clearAllQuickReplies() {
+      document.querySelectorAll('.quick-replies-row').forEach(el => el.remove());
+    }
+
+    // Add bot message bubble, then attach quick reply buttons directly below it
+    function addBotMessage(content, replies) {
       const chatArea = document.getElementById('chatArea');
       const typing = document.getElementById('typing');
-      const handoverBanner = document.getElementById('handoverBanner');
+
       const row = document.createElement('div');
-      row.className = `message-row ${role}`;
+      row.className = 'message-row bot';
       const msg = document.createElement('div');
-      msg.className = `message ${role}`;
+      msg.className = 'message bot';
       msg.innerHTML = content.replace(/\n/g, '<br>') +
-        `<div class="msg-time">${getTime()} ${role === 'user' ? '<span class="msg-tick">✓✓</span>' : ''}</div>`;
+        '<div class="msg-time">' + getTime() + '</div>';
       row.appendChild(msg);
       chatArea.insertBefore(row, typing);
+
+      // Attach quick reply buttons right below this specific message
+      if (replies && replies.length > 0) {
+        const qrRow = document.createElement('div');
+        qrRow.className = 'quick-replies quick-replies-row';
+        replies.forEach(function(text) {
+          const btn = document.createElement('button');
+          btn.className = 'quick-reply';
+          btn.textContent = text;
+          btn.addEventListener('click', function() { sendMessage(text); });
+          qrRow.appendChild(btn);
+        });
+        chatArea.insertBefore(qrRow, typing);
+      }
+
       chatArea.scrollTop = chatArea.scrollHeight;
     }
 
-    // FIX: Render quick reply buttons dynamically from API response
-    function renderQuickReplies(replies) {
-      const container = document.getElementById('quickReplies');
-      container.innerHTML = '';
-      if (!replies || replies.length === 0) return;
-      replies.forEach(text => {
-        const btn = document.createElement('button');
-        btn.className = 'quick-reply';
-        btn.textContent = text;
-        btn.onclick = () => sendMessage(text);
-        container.appendChild(btn);
-      });
-      // Scroll to show the quick replies
-      document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
+    function addUserMessage(content) {
+      const chatArea = document.getElementById('chatArea');
+      const typing = document.getElementById('typing');
+      const row = document.createElement('div');
+      row.className = 'message-row user';
+      const msg = document.createElement('div');
+      msg.className = 'message user';
+      msg.innerHTML = content.replace(/\n/g, '<br>') +
+        '<div class="msg-time">' + getTime() + ' <span class="msg-tick">✓✓</span></div>';
+      row.appendChild(msg);
+      chatArea.insertBefore(row, typing);
+      chatArea.scrollTop = chatArea.scrollHeight;
     }
 
     function showTyping() {
@@ -271,25 +290,25 @@
 
     async function sendMessage(text) {
       const input = document.getElementById('msgInput');
-      const message = text !== undefined ? text : input.value.trim();
+      const message = (text !== undefined && text !== null) ? String(text).trim() : input.value.trim();
       if (!message || isLoading) return;
 
       input.value = '';
       input.style.height = 'auto';
 
-      // Clear quick replies when user sends a message
-      document.getElementById('quickReplies').innerHTML = '';
+      // Clear all previous quick reply buttons when user responds
+      clearAllQuickReplies();
 
-      addMessage(message, 'user');
+      addUserMessage(message);
       isLoading = true;
       document.getElementById('sendBtn').disabled = true;
       showTyping();
 
       try {
-        const res = await fetch(`${API_URL}/api/chat`, {
+        const res = await fetch(API_URL + '/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, message, channel: 'web' })
+          body: JSON.stringify({ sessionId: sessionId, message: message, channel: 'web' })
         });
         const data = await res.json();
 
@@ -299,22 +318,20 @@
         }
 
         hideTyping();
-        addMessage(data.message, 'bot');
-        updateScore(data.leadScore || 0);
 
-        // FIX: Render dynamic quick replies from backend
-        if (data.quickReplies && data.quickReplies.length > 0) {
-          renderQuickReplies(data.quickReplies);
-        }
+        // Attach quick replies directly below this bot message
+        // No buttons if handover triggered
+        const replies = data.handover ? [] : (data.quickReplies || []);
+        addBotMessage(data.message, replies);
+        updateScore(data.leadScore || 0);
 
         if (data.handover) {
           document.getElementById('handoverBanner').classList.add('show');
-          document.getElementById('quickReplies').innerHTML = '';
         }
 
       } catch (err) {
         hideTyping();
-        addMessage("Sorry, I'm having trouble connecting right now. Please try again! 😅", 'bot');
+        addBotMessage("Sorry, I'm having trouble connecting right now. Please try again!", []);
       }
 
       isLoading = false;

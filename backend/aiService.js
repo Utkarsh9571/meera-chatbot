@@ -199,15 +199,27 @@ function extractLeadData(message, currentLeadData) {
     } else if (/200.?400|mid|medium|moderate/i.test(msgLower)) {
       updated.budget = '₹200-400/sqft';
       matched = true;
-    } else if (/400|premium|high|luxury|\+/i.test(msgLower) && /budget|price|cost|per/i.test(msgLower)) {
-      // FIX: removed 'sqft' from the required keywords here since sqft already filtered above
+    } else if (/400\s*\+|400\s*plus|premium|high end|luxury/i.test(msgLower)) {
       updated.budget = '₹400+/sqft';
       matched = true;
     } else {
-      const numMatch = msgLower.match(/(\d[\d,]*)\s*(?:k|thousand|lakh|per|\/)?/);
-      if (numMatch && (msgLower.includes('₹') || msgLower.includes('rs') || msgLower.includes('budget') || msgLower.includes('price') || msgLower.includes('cost') || msgLower.includes('/sqft'))) {
-        updated.budget = numMatch[0].trim();
-        matched = true;
+      // Handle standalone numbers — map to nearest bracket
+      // e.g. "200", "300", "400", "500", "₹350"
+      const standaloneNum = msgLower.match(/^[₹rs\.\s]*([\d,]+)\s*(?:\/sqft|\/sq|per sqft)?\s*$/);
+      if (standaloneNum) {
+        const num = parseInt(standaloneNum[1].replace(/,/g, ''));
+        if (num <= 200) { updated.budget = 'Under ₹200/sqft'; matched = true; }
+        else if (num <= 400) { updated.budget = '₹200-400/sqft'; matched = true; }
+        else { updated.budget = '₹400+/sqft'; matched = true; }
+      } else {
+        // Range like "200 to 400" or "200-400"
+        const rangeMatch = msgLower.match(/(\d+)\s*(?:to|-)\s*(\d+)/);
+        if (rangeMatch) {
+          const lo = parseInt(rangeMatch[1]), hi = parseInt(rangeMatch[2]);
+          if (hi <= 200) { updated.budget = 'Under ₹200/sqft'; matched = true; }
+          else if (lo >= 400) { updated.budget = '₹400+/sqft'; matched = true; }
+          else { updated.budget = '₹200-400/sqft'; matched = true; }
+        }
       }
     }
   }
