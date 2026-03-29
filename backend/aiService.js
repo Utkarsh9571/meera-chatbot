@@ -288,8 +288,6 @@ function getNextStep(leadData) {
 
   return 'recommend';
 }
-console.log("LEAD DATA:", updatedLeadData);
-console.log("NEXT STEP:", nextStep);
 
 // Build quick reply suggestions for each step (returned to frontend)
 function getQuickReplies(nextStep, leadData) {
