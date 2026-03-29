@@ -123,8 +123,10 @@ function extractLeadData(message, currentLeadData) {
   let matched = false;
 
   // LANGUAGE — only if not set
+  // FIX: extract language FIRST so these words never get picked up as a name
+  const LANGUAGE_WORDS = /^(hindi|hinglish|english|eng|हिंदी|hindi english|mix)$/i;
   if (!updated.language) {
-    if (/\b(hindi|हिंदी)\b/i.test(msg)) { updated.language = 'hindi'; matched = true; }
+    if (/\b(hindi|हिंदी)\b/i.test(msg) && !/hinglish/i.test(msg)) { updated.language = 'hindi'; matched = true; }
     else if (/\b(hinglish|hindi english|mix)\b/i.test(msg)) { updated.language = 'hinglish'; matched = true; }
     else if (/\b(english|eng)\b/i.test(msg)) { updated.language = 'english'; matched = true; }
   }
@@ -132,8 +134,10 @@ function extractLeadData(message, currentLeadData) {
   // NAME — only if not set
   if (!updated.name) {
     const greetings = /^(hi|hello|hey|namaste|start|ok|hmm|yes|no|sure|thanks|thank you|good|great|fine)$/i;
+    // FIX: never treat language/product/city choices as a name
+    const systemChoiceWords = /^(hindi|hinglish|english|wall panels|breeze blocks|brick cladding|wall murals|mumbai|delhi|bangalore|pune|chennai|hyderabad|kolkata|jaipur|modern|minimalist|rustic|traditional|geometric|textured|immediately|exploring|living room|bedroom|office|outdoor)$/i;
     const words = msg.trim().split(/\s+/);
-    if (!greetings.test(msg.trim()) && words.length <= 6 && words.length >= 1) {
+    if (!greetings.test(msg.trim()) && !systemChoiceWords.test(msg.trim()) && !LANGUAGE_WORDS.test(msg.trim()) && words.length <= 6 && words.length >= 1) {
       // Extract from "my name is X", "I am X", "this is X", "hi my name is X"
       const namePatterns = [
         /(?:my name is|i am|this is|myself|call me|i'm|im)\s+([A-Za-z][A-Za-z\s]{1,30})/i,
@@ -145,14 +149,13 @@ function extractLeadData(message, currentLeadData) {
         if (m) { extractedName = m[1].trim(); break; }
       }
       if (!extractedName) {
-        // Short message likely to just be a name
         const cleaned = msg.replace(/^(my name is|i am|this is|myself|call me)\s+/i, '').trim();
-        if (cleaned.length > 1 && cleaned.length < 40 && !greetings.test(cleaned) && !/\d/.test(cleaned)) {
+        // FIX: also exclude cleaned value if it's a system choice word
+        if (cleaned.length > 1 && cleaned.length < 40 && !greetings.test(cleaned) && !systemChoiceWords.test(cleaned) && !/\d/.test(cleaned)) {
           extractedName = cleaned;
         }
       }
       if (extractedName) {
-        // Capitalize each word
         updated.name = extractedName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         matched = true;
       }
@@ -175,8 +178,18 @@ function extractLeadData(message, currentLeadData) {
     if (city) { updated.city = city; matched = true; }
   }
 
-  // BUDGET — only if not set
-  if (!updated.budget) {
+  // AREA — extract BEFORE budget so "400 sqft" never gets grabbed as a budget figure
+  if (!updated.area) {
+    const area = extractArea(msgLower);
+    if (area) {
+      updated.area = area;
+      matched = true;
+    }
+  }
+
+  // BUDGET — only if not set, and only if message doesn't look like an area statement
+  const looksLikeArea = /sqft|sq\.?\s*ft|square\s*feet?/i.test(msgLower);
+  if (!updated.budget && !looksLikeArea) {
     if (/no budget|flexible|not fixed|depend|tell me|what.s the|how much/i.test(msgLower)) {
       updated.budget = 'Flexible';
       matched = true;
@@ -186,24 +199,16 @@ function extractLeadData(message, currentLeadData) {
     } else if (/200.?400|mid|medium|moderate/i.test(msgLower)) {
       updated.budget = '₹200-400/sqft';
       matched = true;
-    } else if (/400|premium|high|luxury|\+/i.test(msgLower) && /budget|sqft|price|cost/i.test(msgLower)) {
+    } else if (/400|premium|high|luxury|\+/i.test(msgLower) && /budget|price|cost|per/i.test(msgLower)) {
+      // FIX: removed 'sqft' from the required keywords here since sqft already filtered above
       updated.budget = '₹400+/sqft';
       matched = true;
     } else {
-      const numMatch = msgLower.match(/(\d[\d,]*)\s*(?:k|thousand|lakh|sqft|per|\/)?/);
+      const numMatch = msgLower.match(/(\d[\d,]*)\s*(?:k|thousand|lakh|per|\/)?/);
       if (numMatch && (msgLower.includes('₹') || msgLower.includes('rs') || msgLower.includes('budget') || msgLower.includes('price') || msgLower.includes('cost') || msgLower.includes('/sqft'))) {
         updated.budget = numMatch[0].trim();
         matched = true;
       }
-    }
-  }
-
-  // AREA — FIX: improved extraction
-  if (!updated.area) {
-    const area = extractArea(msgLower);
-    if (area) {
-      updated.area = area;
-      matched = true;
     }
   }
 
@@ -340,15 +345,15 @@ async function chat(messages, leadData, customerCity) {
 
     // Build instruction for AI based on next step
     const stepInstructions = {
-      ask_language: `Greet warmly as Meera from Hey Concrete and ask what language they prefer to chat in. Give them 3 options: English, Hindi, or Hinglish (Hindi-English mix).`,
-      ask_name: `Welcome the customer warmly and ask for their name. Keep it very short and friendly.`,
-      ask_product: `Thank ${updatedLeadData.name || 'them'} and ask what they're interested in. Options will be shown as buttons (Wall Panels, Breeze Blocks, Brick Cladding, Wall Murals) — just ask naturally and mention these options briefly. Don't re-introduce yourself.`,
-      ask_city: `Ask which city they're in so you can suggest the nearest Hey Concrete showroom. Don't re-introduce yourself.`,
-      ask_budget: `Ask about their approximate budget. Mention the ranges (under ₹200/sqft, ₹200-400/sqft, ₹400+/sqft) — buttons will be shown. Keep it conversational.`,
-      ask_area: `Ask how much wall area they want to cover approximately in square feet. Mention that even 50 sqft can transform a room. Buttons for common sizes will be shown.`,
-      ask_room: `Ask which room or space this is for. Options like living room, bedroom, office, outdoor will be shown as buttons.`,
-      ask_style: `Ask about their style preference. Style options (modern, minimalist, rustic, traditional, geometric, textured) will be shown as buttons.`,
-      ask_timeline: `Last question! Ask when they're planning to start. Timeline options will be shown as buttons.`,
+      ask_language: `Greet warmly as Meera from Hey Concrete and ask what language they prefer to chat in. Give them 3 options: English, Hindi, or Hinglish (Hindi-English mix). Do this ONLY ONCE.`,
+      ask_name: `The customer has chosen ${updatedLeadData.language || 'Hinglish'} as their language. Welcome them warmly and ask for their name. Keep it very short and friendly. Do NOT ask about language again — it is already set.`,
+      ask_product: `Ask ${updatedLeadData.name || 'them'} what product they're interested in. Options will be shown as buttons (Wall Panels, Breeze Blocks, Brick Cladding, Wall Murals). Don't re-introduce yourself. Do NOT ask about language again.`,
+      ask_city: `Ask which city they're in so you can suggest the nearest Hey Concrete showroom. Don't re-introduce yourself. Do NOT ask about language again.`,
+      ask_budget: `Ask about their approximate budget. Mention the ranges (under ₹200/sqft, ₹200-400/sqft, ₹400+/sqft) — buttons will be shown. Keep it conversational. Do NOT ask about language again.`,
+      ask_area: `Ask how much wall area they want to cover approximately in square feet. Mention that even 50 sqft can transform a room. Do NOT ask about language again.`,
+      ask_room: `Ask which room or space this is for. Options like living room, bedroom, office, outdoor will be shown as buttons. Do NOT ask about language again.`,
+      ask_style: `Ask about their style preference. Style options (modern, minimalist, rustic, traditional, geometric, textured) will be shown as buttons. Do NOT ask about language again.`,
+      ask_timeline: `Last question! Ask when they're planning to start. Timeline options will be shown as buttons. Do NOT ask about language again.`,
       recommend: `You have all the information! Recommend 2-3 specific products based on their preferences. Be enthusiastic and specific. Mention the nearest showroom if available. Tell them Kabir from the sales team will reach out shortly.`
     };
 

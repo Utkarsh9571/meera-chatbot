@@ -67,6 +67,7 @@ const ConversationSchema = new Schema({
   customerPhone: String,
   leadData: {
     name: String,
+    language: String,
     city: String,
     productInterest: String,
     budget: String,
