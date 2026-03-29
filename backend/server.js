@@ -14,6 +14,7 @@ import cors from 'cors';
 import { randomUUID as uuidv4 } from 'crypto';
 import { Conversation, LearningPrompt, SystemPrompt, KnowledgeBase, Product, Location, CorrectionLog } from './models.js';
 import { chat, applyCorrection } from './aiService.js';
+import { startFollowUpScheduler } from './followUp.js';
 
 const app = express();
 app.use(cors({ origin: '*' }));
@@ -21,7 +22,10 @@ app.use(_json());
 
 // Connect MongoDB
 connect(process.env.MONGO_URI || process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB connected'))
+  .then(() => {
+    console.log('✅ MongoDB connected');
+    startFollowUpScheduler(); // ADD THIS
+  })
   .catch(err => console.error('🔥 FULL ERROR:', err));
 
 // Helper to generate session ID
@@ -124,7 +128,8 @@ app.post('/api/chat', async (req, res) => {
       message: aiResponse.message,
       leadScore: conversation.leadScore,
       handover: conversation.handoverTriggered,
-      handoverReason: conversation.handoverReason
+      handoverReason: conversation.handoverReason,
+      quickReplies: aiResponse.quickReplies || []
     });
 
   } catch (err) {
@@ -440,6 +445,24 @@ app.post('/api/webhook/gupshup', async (req, res) => {
     res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
+
+async function sendGupshupMessage(phone, message) {
+  const url = 'https://api.gupshup.io/sm/api/v1/msg';
+  await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'apikey': process.env.GUPSHUP_API_KEY,
+    },
+    body: new URLSearchParams({
+      channel: 'whatsapp',
+      source: process.env.GUPSHUP_SOURCE_NUMBER, // your Gupshup WhatsApp number
+      destination: phone,
+      message: JSON.stringify({ type: 'text', text: message }),
+      'src.name': process.env.GUPSHUP_APP_NAME,
+    }),
+  });
+}
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

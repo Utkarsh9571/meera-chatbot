@@ -6,12 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meera — Hey Concrete Assistant</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #f0f2f5;
@@ -20,20 +15,17 @@
       align-items: center;
       justify-content: center;
     }
-
     .phone-frame {
       width: 390px;
       height: 844px;
       background: white;
       border-radius: 40px;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.25);
       overflow: hidden;
       display: flex;
       flex-direction: column;
       position: relative;
     }
-
-    /* WhatsApp Header */
     .wa-header {
       background: #075e54;
       padding: 12px 16px;
@@ -42,305 +34,119 @@
       gap: 12px;
       flex-shrink: 0;
     }
-
     .wa-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
+      width: 40px; height: 40px; border-radius: 50%;
       background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
     }
-
-    .wa-info {
-      flex: 1;
-    }
-
-    .wa-name {
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .wa-status {
-      color: #25d366;
-      font-size: 12px;
-    }
-
-    .wa-icons {
-      display: flex;
-      gap: 16px;
-    }
-
-    .wa-icon {
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      opacity: 0.8;
-    }
-
-    /* Chat background */
+    .wa-info { flex: 1; }
+    .wa-name { color: white; font-weight: 600; font-size: 16px; }
+    .wa-status { color: #25d366; font-size: 12px; }
+    .wa-icons { display: flex; gap: 16px; }
+    .wa-icon { color: white; font-size: 18px; cursor: pointer; opacity: 0.8; }
     .chat-bg {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px 12px 8px;
+      flex: 1; overflow-y: auto; padding: 12px 12px 8px;
       background: #e5ddd5;
       background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8bfb0' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     }
-
-    .message-group {
-      margin-bottom: 4px;
-    }
-
     .message {
-      max-width: 78%;
-      padding: 8px 12px 6px;
-      border-radius: 8px;
-      font-size: 14px;
-      line-height: 1.4;
-      position: relative;
-      margin-bottom: 2px;
-      word-wrap: break-word;
+      max-width: 78%; padding: 8px 12px 6px; border-radius: 8px;
+      font-size: 14px; line-height: 1.4; position: relative;
+      margin-bottom: 2px; word-wrap: break-word;
     }
-
     .message.bot {
-      background: white;
-      border-top-left-radius: 0;
-      align-self: flex-start;
-      margin-right: auto;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      background: white; border-top-left-radius: 0;
+      align-self: flex-start; margin-right: auto;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
-
     .message.user {
-      background: #d9fdd3;
-      border-top-right-radius: 0;
-      align-self: flex-end;
-      margin-left: auto;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      background: #d9fdd3; border-top-right-radius: 0;
+      align-self: flex-end; margin-left: auto;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
-
-    .message-row {
-      display: flex;
-    }
-
-    .message-row.user {
-      justify-content: flex-end;
-    }
-
-    .message-row.bot {
-      justify-content: flex-start;
-    }
-
-    .msg-time {
-      font-size: 10px;
-      color: #999;
-      float: right;
-      margin-top: 2px;
-      margin-left: 8px;
-    }
-
-    .msg-tick {
-      color: #53bdeb;
-      margin-left: 2px;
-    }
+    .message-row { display: flex; }
+    .message-row.user { justify-content: flex-end; }
+    .message-row.bot { justify-content: flex-start; }
+    .msg-time { font-size: 10px; color: #999; float: right; margin-top: 2px; margin-left: 8px; }
+    .msg-tick { color: #53bdeb; margin-left: 2px; }
 
     /* Quick replies */
     .quick-replies {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      display: flex; flex-wrap: wrap; gap: 8px;
       margin: 8px 0 8px 4px;
     }
-
     .quick-reply {
-      background: white;
-      border: 1.5px solid #25d366;
-      color: #075e54;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-weight: 500;
+      background: white; border: 1.5px solid #25d366; color: #075e54;
+      padding: 6px 14px; border-radius: 20px; font-size: 13px;
+      cursor: pointer; transition: all 0.2s; font-weight: 500;
     }
-
-    .quick-reply:hover {
-      background: #25d366;
-      color: white;
-    }
+    .quick-reply:hover { background: #25d366; color: white; }
 
     /* Typing indicator */
     .typing {
-      display: none;
-      padding: 8px 12px;
-      background: white;
-      border-radius: 8px;
-      border-top-left-radius: 0;
-      margin-bottom: 8px;
-      width: fit-content;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      display: none; padding: 8px 12px; background: white;
+      border-radius: 8px; border-top-left-radius: 0;
+      margin-bottom: 8px; width: fit-content;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
-
-    .typing.show {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
+    .typing.show { display: flex; align-items: center; gap: 4px; }
     .typing-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #999;
+      width: 7px; height: 7px; border-radius: 50%; background: #999;
       animation: typingAnim 1.2s infinite;
     }
-
-    .typing-dot:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .typing-dot:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
     @keyframes typingAnim {
-
-      0%,
-      60%,
-      100% {
-        transform: translateY(0);
-        opacity: 0.4;
-      }
-
-      30% {
-        transform: translateY(-5px);
-        opacity: 1;
-      }
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-5px); opacity: 1; }
     }
 
     /* Handover banner */
     .handover-banner {
-      background: #fff3cd;
-      border-left: 4px solid #ffc107;
-      padding: 10px 14px;
-      margin: 8px;
-      border-radius: 4px;
-      font-size: 13px;
-      display: none;
+      background: #fff3cd; border-left: 4px solid #ffc107;
+      padding: 10px 14px; margin: 8px; border-radius: 4px;
+      font-size: 13px; display: none;
     }
-
-    .handover-banner.show {
-      display: block;
-    }
+    .handover-banner.show { display: block; }
 
     /* Lead score */
     .lead-score-bar {
-      background: #f0f0f0;
-      padding: 6px 12px;
-      font-size: 11px;
-      color: #666;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      background: #f0f0f0; padding: 6px 12px; font-size: 11px;
+      color: #666; display: flex; align-items: center; gap: 8px;
       border-bottom: 1px solid #e0e0e0;
     }
-
-    .score-fill {
-      height: 4px;
-      border-radius: 2px;
-      background: #25d366;
-      transition: width 0.5s ease;
-    }
-
-    .score-track {
-      flex: 1;
-      background: #ddd;
-      border-radius: 2px;
-      height: 4px;
-    }
+    .score-fill { height: 4px; border-radius: 2px; background: #25d366; transition: width 0.5s ease; }
+    .score-track { flex: 1; background: #ddd; border-radius: 2px; height: 4px; }
 
     /* Input area */
     .wa-input-area {
-      background: #f0f2f5;
-      padding: 8px 12px;
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      flex-shrink: 0;
+      background: #f0f2f5; padding: 8px 12px;
+      display: flex; align-items: flex-end; gap: 8px; flex-shrink: 0;
     }
-
     .wa-input-box {
-      flex: 1;
-      background: white;
-      border-radius: 24px;
-      padding: 10px 16px;
-      font-size: 15px;
-      border: none;
-      outline: none;
-      resize: none;
-      max-height: 100px;
-      font-family: inherit;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      flex: 1; background: white; border-radius: 24px; padding: 10px 16px;
+      font-size: 15px; border: none; outline: none; resize: none;
+      max-height: 100px; font-family: inherit;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
-
     .wa-send {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #25d366;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 20px;
-      flex-shrink: 0;
+      width: 48px; height: 48px; border-radius: 50%; background: #25d366;
+      border: none; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; color: white; font-size: 20px; flex-shrink: 0;
       transition: background 0.2s;
     }
-
-    .wa-send:hover {
-      background: #1da851;
-    }
-
-    .wa-send:disabled {
-      background: #ccc;
-      cursor: default;
-    }
-
-    /* Date divider */
-    .date-divider {
-      text-align: center;
-      margin: 12px 0;
-    }
-
-    .date-divider span {
-      background: #e1e1e1;
-      color: #666;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 8px;
-    }
-
-    /* Scrollbar */
-    .chat-bg::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .chat-bg::-webkit-scrollbar-thumb {
-      background: #ccc;
-      border-radius: 2px;
-    }
+    .wa-send:hover { background: #1da851; }
+    .wa-send:disabled { background: #ccc; cursor: default; }
+    .date-divider { text-align: center; margin: 12px 0; }
+    .date-divider span { background: #e1e1e1; color: #666; font-size: 11px; padding: 4px 10px; border-radius: 8px; }
+    .chat-bg::-webkit-scrollbar { width: 4px; }
+    .chat-bg::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
   </style>
 </head>
 
 <body>
-
   <div class="phone-frame">
-    <!-- Header -->
     <div class="wa-header">
       <div class="wa-avatar">👩</div>
       <div class="wa-info">
@@ -353,7 +159,6 @@
       </div>
     </div>
 
-    <!-- Lead score bar -->
     <div class="lead-score-bar">
       <span>Lead Score</span>
       <div class="score-track">
@@ -362,50 +167,43 @@
       <span id="scoreText">0/100</span>
     </div>
 
-    <!-- Chat area -->
     <div class="chat-bg" id="chatArea">
       <div class="date-divider"><span>Today</span></div>
 
-      <!-- Initial message -->
       <div class="message-row bot">
         <div class="message bot">
-          Namaste! 🙏 I'm Meera from Hey Concrete. We create beautiful concrete wall panels, breeze blocks, and murals
-          for stunning interiors.
-          <div class="msg-time">10:30 <span class="msg-tick">✓✓</span></div>
+          Namaste! 🙏 I'm Meera from Hey Concrete. We create beautiful concrete wall panels, breeze blocks, and murals for stunning interiors.
+          <div class="msg-time">now <span class="msg-tick">✓✓</span></div>
         </div>
       </div>
       <div class="message-row bot">
         <div class="message bot">
-          How can I help you today? Are you looking to transform a wall in your home or office? 😊
-          <div class="msg-time">10:30 <span class="msg-tick">✓✓</span></div>
+          How would you like to chat? 😊
+          <div class="msg-time">now <span class="msg-tick">✓✓</span></div>
         </div>
       </div>
 
-      <!-- Quick replies -->
+      <!-- Initial language quick replies -->
       <div class="quick-replies" id="quickReplies">
-        <button class="quick-reply" onclick="sendQuickReply('Wall Panels')">🏠 Wall Panels</button>
-        <button class="quick-reply" onclick="sendQuickReply('Breeze Blocks')">🧱 Breeze Blocks</button>
-        <button class="quick-reply" onclick="sendQuickReply('Brick Cladding')">🔲 Brick Cladding</button>
-        <button class="quick-reply" onclick="sendQuickReply('Wall Murals')">🎨 Wall Murals</button>
+        <button class="quick-reply" onclick="sendMessage('English')">🇬🇧 English</button>
+        <button class="quick-reply" onclick="sendMessage('Hinglish')">🇮🇳 Hinglish</button>
+        <button class="quick-reply" onclick="sendMessage('Hindi')">हिंदी</button>
       </div>
 
-      <!-- Typing indicator -->
       <div class="typing" id="typing">
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
         <div class="typing-dot"></div>
       </div>
 
-      <!-- Handover banner -->
       <div class="handover-banner" id="handoverBanner">
         🤝 Connecting you with <strong>Kabir</strong> from our sales team for personalized assistance!
       </div>
     </div>
 
-    <!-- Input area -->
     <div class="wa-input-area">
-      <textarea class="wa-input-box" id="msgInput" placeholder="Message" rows="1" onkeydown="handleKeyDown(event)"
-        oninput="autoResize(this)"></textarea>
+      <textarea class="wa-input-box" id="msgInput" placeholder="Message" rows="1"
+        onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
       <button class="wa-send" id="sendBtn" onclick="sendMessage()">➤</button>
     </div>
   </div>
@@ -418,12 +216,10 @@
     function getTime() {
       return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     }
-
     function autoResize(el) {
       el.style.height = 'auto';
       el.style.height = Math.min(el.scrollHeight, 100) + 'px';
     }
-
     function handleKeyDown(e) {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     }
@@ -432,51 +228,59 @@
       const chatArea = document.getElementById('chatArea');
       const typing = document.getElementById('typing');
       const handoverBanner = document.getElementById('handoverBanner');
-
       const row = document.createElement('div');
       row.className = `message-row ${role}`;
-
       const msg = document.createElement('div');
       msg.className = `message ${role}`;
       msg.innerHTML = content.replace(/\n/g, '<br>') +
         `<div class="msg-time">${getTime()} ${role === 'user' ? '<span class="msg-tick">✓✓</span>' : ''}</div>`;
-
       row.appendChild(msg);
       chatArea.insertBefore(row, typing);
-      chatArea.insertBefore(row, handoverBanner);
       chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    // FIX: Render quick reply buttons dynamically from API response
+    function renderQuickReplies(replies) {
+      const container = document.getElementById('quickReplies');
+      container.innerHTML = '';
+      if (!replies || replies.length === 0) return;
+      replies.forEach(text => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-reply';
+        btn.textContent = text;
+        btn.onclick = () => sendMessage(text);
+        container.appendChild(btn);
+      });
+      // Scroll to show the quick replies
+      document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
     }
 
     function showTyping() {
       document.getElementById('typing').classList.add('show');
       document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
     }
-
     function hideTyping() {
       document.getElementById('typing').classList.remove('show');
     }
-
     function updateScore(score) {
       document.getElementById('scoreFill').style.width = score + '%';
       document.getElementById('scoreText').textContent = score + '/100';
-      if (score >= 70) {
-        document.getElementById('scoreFill').style.background = '#ff6b35';
-      } else if (score >= 40) {
-        document.getElementById('scoreFill').style.background = '#ffc107';
-      }
+      if (score >= 70) document.getElementById('scoreFill').style.background = '#ff6b35';
+      else if (score >= 40) document.getElementById('scoreFill').style.background = '#ffc107';
     }
 
     async function sendMessage(text) {
       const input = document.getElementById('msgInput');
-      const message = text || input.value.trim();
+      const message = text !== undefined ? text : input.value.trim();
       if (!message || isLoading) return;
 
       input.value = '';
       input.style.height = 'auto';
+
+      // Clear quick replies when user sends a message
       document.getElementById('quickReplies').innerHTML = '';
 
       addMessage(message, 'user');
-
       isLoading = true;
       document.getElementById('sendBtn').disabled = true;
       showTyping();
@@ -485,16 +289,10 @@
         const res = await fetch(`${API_URL}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: sessionId,
-            message,
-            channel: 'web'
-          })
+          body: JSON.stringify({ sessionId, message, channel: 'web' })
         });
-
         const data = await res.json();
 
-        // ✅ FIX: persist session
         if (data.sessionId) {
           sessionId = data.sessionId;
           localStorage.setItem("sessionId", sessionId);
@@ -504,8 +302,14 @@
         addMessage(data.message, 'bot');
         updateScore(data.leadScore || 0);
 
+        // FIX: Render dynamic quick replies from backend
+        if (data.quickReplies && data.quickReplies.length > 0) {
+          renderQuickReplies(data.quickReplies);
+        }
+
         if (data.handover) {
           document.getElementById('handoverBanner').classList.add('show');
+          document.getElementById('quickReplies').innerHTML = '';
         }
 
       } catch (err) {
@@ -517,19 +321,6 @@
       document.getElementById('sendBtn').disabled = false;
       document.getElementById('msgInput').focus();
     }
-
-    // ✅ PRODUCTION FIX: Event Delegation for Quick Replies
-    document.addEventListener("click", function (e) {
-      if (e.target.classList.contains("quick-reply")) {
-        const text = e.target.getAttribute('data-reply') || e.target.innerText.replace(/[^\w\s-]/g, '').trim();
-        sendMessage(text);
-      }
-    });
-
-    function sendQuickReply(text) {
-      sendMessage(text);
-    }
   </script>
 </body>
-
 </html>

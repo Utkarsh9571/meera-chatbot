@@ -52,6 +52,69 @@ async function getNearestShowroom(city) {
   }
 }
 
+// FIX: Improved area extraction — handles "around 150", "150 sqft", "150 sq ft", etc.
+function extractArea(msgLower) {
+  // Direct sqft mention
+  const sqftMatch = msgLower.match(/(\d[\d,]*)\s*(?:sqft|sq\.?\s*ft\.?|square\s*feet?|sq\b)/i);
+  if (sqftMatch) return sqftMatch[1].replace(/,/g, '') + ' sqft';
+
+  // "around / approximately / about X" — treat as area if in area context
+  const aroundMatch = msgLower.match(/(?:around|approximately|about|roughly|~)\s*(\d[\d,]+)/i);
+  if (aroundMatch && /area|wall|sqft|sq|feet|cover|space|size/i.test(msgLower)) {
+    return aroundMatch[1].replace(/,/g, '') + ' sqft';
+  }
+
+  // standalone number with area context keyword
+  if (/area|wall|size|cover|space/i.test(msgLower)) {
+    const numMatch = msgLower.match(/(\d[\d,]+)/);
+    if (numMatch) return numMatch[1].replace(/,/g, '') + ' sqft';
+  }
+
+  return null;
+}
+
+// FIX: Fuzzy city matching — handles typos like "banglore", "mumbay", etc.
+const CITY_ALIASES = {
+  'mumbai': ['mumbai', 'bombay', 'mumbay', 'mumbei'],
+  'delhi': ['delhi', 'new delhi', 'dilli', 'dehli'],
+  'bangalore': ['bangalore', 'bengaluru', 'banglore', 'bangaluru', 'bengalore', 'blr'],
+  'hyderabad': ['hyderabad', 'hydrabad', 'hyd', 'hydrabad'],
+  'chennai': ['chennai', 'madras', 'chenai'],
+  'pune': ['pune', 'puna'],
+  'ahmedabad': ['ahmedabad', 'amdavad', 'ahmadabad'],
+  'kolkata': ['kolkata', 'calcutta', 'kolkatta'],
+  'jaipur': ['jaipur', 'jaipure'],
+  'udaipur': ['udaipur', 'udaypur'],
+  'surat': ['surat'],
+  'lucknow': ['lucknow', 'lucknau'],
+  'alwar': ['alwar'],
+  'gurgaon': ['gurgaon', 'gurugram'],
+  'noida': ['noida'],
+  'chandigarh': ['chandigarh'],
+  'indore': ['indore'],
+  'bhopal': ['bhopal'],
+  'nagpur': ['nagpur'],
+  'coimbatore': ['coimbatore', 'coimbattur'],
+  'vadodara': ['vadodara', 'baroda'],
+  'kochi': ['kochi', 'cochin'],
+  'thiruvananthapuram': ['thiruvananthapuram', 'trivandrum'],
+  'vizag': ['vizag', 'visakhapatnam'],
+  'patna': ['patna'],
+  'ranchi': ['ranchi'],
+  'punjab': ['punjab', 'amritsar', 'ludhiana', 'chandigarh'],
+};
+
+function extractCity(msgLower) {
+  for (const [canonical, aliases] of Object.entries(CITY_ALIASES)) {
+    for (const alias of aliases) {
+      if (msgLower.includes(alias)) {
+        return canonical.charAt(0).toUpperCase() + canonical.slice(1);
+      }
+    }
+  }
+  return null;
+}
+
 // Extract lead data from message
 function extractLeadData(message, currentLeadData) {
   const msg = message.trim();
@@ -59,15 +122,38 @@ function extractLeadData(message, currentLeadData) {
   const updated = { ...currentLeadData };
   let matched = false;
 
+  // LANGUAGE — only if not set
+  if (!updated.language) {
+    if (/\b(hindi|हिंदी)\b/i.test(msg)) { updated.language = 'hindi'; matched = true; }
+    else if (/\b(hinglish|hindi english|mix)\b/i.test(msg)) { updated.language = 'hinglish'; matched = true; }
+    else if (/\b(english|eng)\b/i.test(msg)) { updated.language = 'english'; matched = true; }
+  }
+
   // NAME — only if not set
   if (!updated.name) {
     const greetings = /^(hi|hello|hey|namaste|start|ok|hmm|yes|no|sure|thanks|thank you|good|great|fine)$/i;
     const words = msg.trim().split(/\s+/);
-    if (!greetings.test(msg.trim()) && words.length <= 4 && words.length >= 1) {
-      // Remove common prefixes
-      const cleaned = msg.replace(/^(my name is|i am|this is|myself|call me)\s+/i, '').trim();
-      if (cleaned.length > 1 && cleaned.length < 40) {
-        updated.name = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    if (!greetings.test(msg.trim()) && words.length <= 6 && words.length >= 1) {
+      // Extract from "my name is X", "I am X", "this is X", "hi my name is X"
+      const namePatterns = [
+        /(?:my name is|i am|this is|myself|call me|i'm|im)\s+([A-Za-z][A-Za-z\s]{1,30})/i,
+        /^(?:hi|hello|hey)[\s,!]+(?:my name is|i am|i'm|im)\s+([A-Za-z][A-Za-z\s]{1,30})/i,
+      ];
+      let extractedName = null;
+      for (const pattern of namePatterns) {
+        const m = msg.match(pattern);
+        if (m) { extractedName = m[1].trim(); break; }
+      }
+      if (!extractedName) {
+        // Short message likely to just be a name
+        const cleaned = msg.replace(/^(my name is|i am|this is|myself|call me)\s+/i, '').trim();
+        if (cleaned.length > 1 && cleaned.length < 40 && !greetings.test(cleaned) && !/\d/.test(cleaned)) {
+          extractedName = cleaned;
+        }
+      }
+      if (extractedName) {
+        // Capitalize each word
+        updated.name = extractedName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         matched = true;
       }
     }
@@ -79,21 +165,14 @@ function extractLeadData(message, currentLeadData) {
     else if (/breeze|block|ventilation/i.test(msgLower)) { updated.productInterest = 'breeze-blocks'; matched = true; }
     else if (/brick|clad|rustic/i.test(msgLower)) { updated.productInterest = 'brick-cladding'; matched = true; }
     else if (/mural|art|painting/i.test(msgLower)) { updated.productInterest = 'wall-murals'; matched = true; }
+    // "wall cladding" → brick-cladding
+    else if (/wall\s*clad/i.test(msgLower)) { updated.productInterest = 'brick-cladding'; matched = true; }
   }
 
-  // CITY — only if not set
+  // CITY — FIX: use fuzzy matching
   if (!updated.city) {
-    const cities = ['mumbai', 'delhi', 'bangalore', 'bengaluru', 'hyderabad', 'chennai', 'pune',
-      'ahmedabad', 'kolkata', 'jaipur', 'udaipur', 'surat', 'lucknow', 'alwar',
-      'gurgaon', 'noida', 'chandigarh', 'indore', 'bhopal', 'nagpur', 'coimbatore',
-      'vadodara', 'kochi', 'thiruvananthapuram', 'vizag', 'patna', 'ranchi'];
-    for (const c of cities) {
-      if (msgLower.includes(c)) {
-        updated.city = c.charAt(0).toUpperCase() + c.slice(1);
-        matched = true;
-        break;
-      }
-    }
+    const city = extractCity(msgLower);
+    if (city) { updated.city = city; matched = true; }
   }
 
   // BUDGET — only if not set
@@ -111,7 +190,6 @@ function extractLeadData(message, currentLeadData) {
       updated.budget = '₹400+/sqft';
       matched = true;
     } else {
-      // Try to extract number
       const numMatch = msgLower.match(/(\d[\d,]*)\s*(?:k|thousand|lakh|sqft|per|\/)?/);
       if (numMatch && (msgLower.includes('₹') || msgLower.includes('rs') || msgLower.includes('budget') || msgLower.includes('price') || msgLower.includes('cost') || msgLower.includes('/sqft'))) {
         updated.budget = numMatch[0].trim();
@@ -120,15 +198,12 @@ function extractLeadData(message, currentLeadData) {
     }
   }
 
-  // AREA — only if not set
+  // AREA — FIX: improved extraction
   if (!updated.area) {
-    const areaMatch = msgLower.match(/(\d+)\s*(?:sqft|sq\.?\s*ft|square\s*feet?|sq|feet?)/i);
-    if (areaMatch) {
-      updated.area = areaMatch[1] + ' sqft';
+    const area = extractArea(msgLower);
+    if (area) {
+      updated.area = area;
       matched = true;
-    } else if (/\d+/.test(msgLower) && /area|wall|size|cover|space/i.test(msgLower)) {
-      const numMatch = msgLower.match(/(\d+)/);
-      if (numMatch) { updated.area = numMatch[1] + ' sqft'; matched = true; }
     }
   }
 
@@ -172,7 +247,6 @@ function calculateScore(leadData) {
   if (leadData.city) score += 10;
   if (leadData.budget) {
     score += 25;
-    // Bonus if specific budget provided (not flexible)
     if (leadData.budget !== 'Flexible') score += 5;
   }
   if (leadData.area) score += 20;
@@ -186,13 +260,14 @@ function calculateScore(leadData) {
   return Math.min(score, 100);
 }
 
-// Check if manual handover triggered
+// FIX: Improved handover detection — catches more natural phrasing
 function checkManualHandover(message) {
-  return /\b(call|talk\s*to|speak\s*to|human|person|kabir|expert|sales|number|callback|call\s*back|order|confirm|visit|showroom)\b/i.test(message);
+  return /\b(call|talk\s*to|speak\s*to|human|person|kabir|expert|sales|number|callback|call\s*back|order|confirm|visit|showroom|connect me|real person|actual person|someone|anybody|can i talk|chat with|get in touch)\b/i.test(message);
 }
 
 // Determine next step in conversation
 function getNextStep(leadData) {
+  if (!leadData.language) return 'ask_language';
   if (!leadData.name) return 'ask_name';
   if (!leadData.productInterest) return 'ask_product';
   if (!leadData.city) return 'ask_city';
@@ -204,15 +279,28 @@ function getNextStep(leadData) {
   return 'recommend';
 }
 
+// Build quick reply suggestions for each step (returned to frontend)
+function getQuickReplies(nextStep, leadData) {
+  const qr = {
+    ask_language: ['English', 'Hindi', 'Hinglish'],
+    ask_product: ['Wall Panels', 'Breeze Blocks', 'Brick Cladding', 'Wall Murals'],
+    ask_budget: ['Under ₹200/sqft', '₹200-400/sqft', '₹400+/sqft', 'Flexible'],
+    ask_room: ['Living Room', 'Bedroom', 'Office', 'Outdoor'],
+    ask_style: ['Modern', 'Minimalist', 'Rustic', 'Traditional'],
+    ask_timeline: ['Immediately', 'In 1-3 months', 'Just Exploring'],
+  };
+  return qr[nextStep] || [];
+}
+
 // Main chat function
 async function chat(messages, leadData, customerCity) {
   try {
     const lastUserMsg = messages[messages.length - 1].content;
 
     // Extract data from message
-    const { updated: updatedLeadData, matched } = extractLeadData(lastUserMsg, leadData || {});
+    const { updated: updatedLeadData } = extractLeadData(lastUserMsg, leadData || {});
 
-    // Check manual handover triggers
+    // FIX: Check handover BEFORE score check so "can i talk to someone" always works
     const manualHandover = checkManualHandover(lastUserMsg);
 
     // Calculate score
@@ -222,6 +310,7 @@ async function chat(messages, leadData, customerCity) {
 
     // Determine next step
     const nextStep = getNextStep(updatedLeadData);
+    const quickReplies = getQuickReplies(nextStep, updatedLeadData);
 
     // Get learning rules from DB
     const learningRules = await getLearningRules();
@@ -247,28 +336,38 @@ async function chat(messages, leadData, customerCity) {
       }
     }
 
+    const lang = updatedLeadData.language || 'hinglish';
+
     // Build instruction for AI based on next step
     const stepInstructions = {
-      ask_name: `Greet warmly as Meera from Hey Concrete and ask for the customer's name naturally.`,
-      ask_product: `Thank ${updatedLeadData.name || 'them'} and ask what they're interested in. Offer these options naturally: Wall Panels, Breeze Blocks, Brick Cladding, or Wall Murals. Make it sound exciting!`,
-      ask_city: `Ask which city they're in so you can suggest the nearest Hey Concrete showroom.`,
-      ask_budget: `Ask about their approximate budget. Mention the ranges naturally: under ₹200/sqft (brick cladding), ₹200-400/sqft (popular wall panels), or ₹400+/sqft (premium). Keep it conversational.`,
-      ask_area: `Ask how much wall area they want to cover, approximately in square feet. You can mention that even a 50 sqft feature wall can transform a room.`,
-      ask_room: `Ask which room or space this is for — living room, bedroom, office, outdoor, etc.`,
-      ask_style: `Ask about their style preference — modern, minimalist, rustic, traditional, geometric, or textured. You can briefly mention what's popular.`,
-      ask_timeline: `Last question! Ask when they're planning to start — immediately, in a few months, or just exploring ideas right now.`,
-      recommend: `You have all the information! Recommend 2-3 specific products based on their preferences. Be enthusiastic and specific. Then mention the nearest showroom if available. Tell them Kabir from the sales team will reach out shortly.`
+      ask_language: `Greet warmly as Meera from Hey Concrete and ask what language they prefer to chat in. Give them 3 options: English, Hindi, or Hinglish (Hindi-English mix).`,
+      ask_name: `Welcome the customer warmly and ask for their name. Keep it very short and friendly.`,
+      ask_product: `Thank ${updatedLeadData.name || 'them'} and ask what they're interested in. Options will be shown as buttons (Wall Panels, Breeze Blocks, Brick Cladding, Wall Murals) — just ask naturally and mention these options briefly. Don't re-introduce yourself.`,
+      ask_city: `Ask which city they're in so you can suggest the nearest Hey Concrete showroom. Don't re-introduce yourself.`,
+      ask_budget: `Ask about their approximate budget. Mention the ranges (under ₹200/sqft, ₹200-400/sqft, ₹400+/sqft) — buttons will be shown. Keep it conversational.`,
+      ask_area: `Ask how much wall area they want to cover approximately in square feet. Mention that even 50 sqft can transform a room. Buttons for common sizes will be shown.`,
+      ask_room: `Ask which room or space this is for. Options like living room, bedroom, office, outdoor will be shown as buttons.`,
+      ask_style: `Ask about their style preference. Style options (modern, minimalist, rustic, traditional, geometric, textured) will be shown as buttons.`,
+      ask_timeline: `Last question! Ask when they're planning to start. Timeline options will be shown as buttons.`,
+      recommend: `You have all the information! Recommend 2-3 specific products based on their preferences. Be enthusiastic and specific. Mention the nearest showroom if available. Tell them Kabir from the sales team will reach out shortly.`
     };
 
     const instruction = handover
-      ? `Tell the customer warmly that you're connecting them with Kabir from the sales team who will reach out on WhatsApp within 15 minutes with a personalized catalog and pricing. Thank them for their interest.`
+      ? `Tell the customer warmly that you're connecting them with Kabir from the sales team who will reach out on WhatsApp within 15 minutes with a personalized catalog and pricing. Thank them for their interest. Be warm and reassuring.`
       : stepInstructions[nextStep] || stepInstructions.recommend;
+
+    const langInstruction = lang === 'hindi'
+      ? 'Write mostly in Hindi (Devanagari script is fine, or Roman Hindi). Keep it warm and friendly.'
+      : lang === 'english'
+      ? 'Write in clear, warm English only.'
+      : 'Write in natural Hinglish (friendly Indian English with occasional Hindi words like "Namaste", "bilkul", "kya khayal hai", "bahut accha", "shukriya"). Keep it warm and conversational.';
 
     // Build the full prompt
     const prompt = `You are Meera, a warm and friendly sales consultant from Hey Concrete — a premium concrete wall panels brand in India.
 
 CUSTOMER INFO SO FAR:
 Name: ${updatedLeadData.name || 'Not provided yet'}
+Language Preference: ${updatedLeadData.language || 'Not set yet'}
 Product Interest: ${updatedLeadData.productInterest || 'Not provided yet'}
 City: ${updatedLeadData.city || 'Not provided yet'}
 Budget: ${updatedLeadData.budget || 'Not provided yet'}
@@ -285,16 +384,19 @@ ${showroomContext}
 
 ${learningRules ? `IMPORTANT BEHAVIOR RULES (follow strictly):\n${learningRules}\n` : ''}
 
+LANGUAGE: ${langInstruction}
+
 WRITING RULES:
-- Write in natural Hinglish (friendly Indian English, occasional Hindi words)
 - Maximum 3-4 lines per message
 - Use 1-2 emojis naturally
-- Use the customer's name (${updatedLeadData.name || ''}) when appropriate
+- Use the customer's name (${updatedLeadData.name || ''}) when appropriate — but NOT in every message
 - Sound like a real WhatsApp conversation, not a form
 - NEVER say you are an AI or bot
+- NEVER re-introduce yourself after the first message — the customer already knows you are Meera
 - NEVER repeat a question if it was already answered
 - Be warm, enthusiastic, and helpful
-- If customer gave info, acknowledge it before moving on
+- If customer gave info, acknowledge it naturally before moving on
+- If buttons/options are provided, just mention them naturally — don't list them all out again in your message
 
 Return ONLY the message text, nothing else.`;
 
@@ -306,7 +408,8 @@ Return ONLY the message text, nothing else.`;
       leadData: updatedLeadData,
       leadScore: score,
       handover,
-      handoverReason: manualHandover ? 'Customer requested human' : autoHandover ? 'Lead qualified (score >= 70)' : ''
+      handoverReason: manualHandover ? 'Customer requested human' : autoHandover ? 'Lead qualified (score >= 70)' : '',
+      quickReplies,
     };
 
   } catch (err) {
@@ -316,7 +419,8 @@ Return ONLY the message text, nothing else.`;
       leadData: leadData || {},
       leadScore: 0,
       handover: false,
-      handoverReason: ''
+      handoverReason: '',
+      quickReplies: ['Wall Panels', 'Breeze Blocks', 'Brick Cladding', 'Wall Murals'],
     };
   }
 }
